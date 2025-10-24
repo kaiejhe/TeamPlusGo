@@ -1,5 +1,13 @@
 <template>
   <main class="min-h-screen bg-slate-100 px-6 py-16">
+    <ConfirmDialog
+      :open="confirmDialogState.open"
+      :card="confirmDialogState.card"
+      :email="confirmDialogState.email"
+      :after-sales="confirmDialogState.afterSales ?? undefined"
+      @confirm="handleConfirmDialog(true)"
+      @cancel="handleConfirmDialog(false)"
+    />
     <div class="mx-auto w-full max-w-4xl space-y-6">
       <Card class="shadow-sm">
         <CardHeader class="space-y-4">
@@ -13,7 +21,6 @@
               </CardDescription>
             </div>
             <div class="flex flex-wrap items-center gap-2">
-              <Badge :variant="statusMeta.badgeVariant">{{ statusMeta.label }}</Badge>
               <Button
                 variant="outline"
                 size="sm"
@@ -26,33 +33,6 @@
             </div>
           </div>
 
-          <div class="grid gap-4 rounded-lg bg-slate-50 px-4 py-3 text-sm text-slate-600 shadow-sm">
-            <div class="flex flex-wrap items-center justify-between gap-3">
-              <div class="space-y-1">
-                <p class="text-xs text-slate-500">Team 兑换码</p>
-                <p class="font-mono text-sm font-medium text-slate-900">{{ cardKey }}</p>
-              </div>
-              <div class="text-right">
-                <p class="text-xs text-slate-500">最近检测</p>
-                <p class="text-xs font-medium text-slate-700">{{ lastVerifiedDisplay }}</p>
-              </div>
-            </div>
-
-            <div v-if="orderInfo" class="grid gap-3 text-xs text-slate-600 sm:grid-cols-2">
-              <div class="space-y-1">
-                <p class="text-xs text-slate-500">绑定邮箱</p>
-                <p class="font-mono text-sm text-slate-900">
-                  {{ orderInfo.Order_us_Email ?? storedState?.email ?? "—" }}
-                </p>
-              </div>
-              <div class="space-y-1">
-                <p class="text-xs text-slate-500">Team ID</p>
-                <p class="font-mono text-[11px] text-slate-900">
-                  {{ orderInfo.OrderTeamID ?? orderInfo.TeamCard ?? cardKey }}
-                </p>
-              </div>
-            </div>
-          </div>
         </CardHeader>
       </Card>
 
@@ -91,12 +71,78 @@
               </span>
             </div>
           </div>
+          <div class="grid gap-4 rounded-lg bg-slate-50 px-4 py-3 text-sm text-slate-600 shadow-sm">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+              <div class="space-y-1">
+                <p class="text-xs text-slate-500">Team 兑换码</p>
+                <p class="font-mono text-sm font-medium text-slate-900">{{ cardKey }}</p>
+              </div>
+              <div class="text-right">
+                <p class="text-xs text-slate-500">最近检测</p>
+                <p class="text-xs font-medium text-slate-700">{{ lastVerifiedDisplay }}</p>
+              </div>
+            </div>
+
+            <div class="grid gap-3 text-xs text-slate-600 sm:grid-cols-2">
+              <div class="space-y-1">
+                <p class="text-xs text-slate-500">绑定邮箱</p>
+                <p class="font-mono text-sm text-slate-900">
+                  {{ orderInfo?.Order_us_Email ?? storedState?.email ?? '—' }}
+                </p>
+              </div>
+              <div class="space-y-1">
+                <p class="text-xs text-slate-500">Team ID</p>
+                <p class="font-mono text-[11px] text-slate-900">
+                  {{ orderInfo?.OrderTeamID ?? orderInfo?.TeamCard ?? cardKey }}
+                </p>
+              </div>
+            </div>
+          </div>
 
           <section v-if="statusKey === 'unused'" class="space-y-5">
             <Alert variant="default">
-              <AlertTitle>卡密未使用</AlertTitle>
-              <AlertDescription>
-                填写收件邮箱后，系统将自动发送邀请邮件。
+              <AlertDescription class="space-y-2">
+                <p class="text-sm leading-relaxed text-slate-600">
+                  绑定邮箱前，请先确认 GPT 注册邮箱，确保填写的信息准确无误。
+                </p>
+                <details class="group space-y-1 text-xs leading-relaxed text-slate-600">
+                  <summary
+                    class="cursor-pointer text-sm font-medium text-primary transition hover:underline group-open:text-primary/80"
+                  >
+                    如何确认 GPT 注册邮箱？
+                  </summary>
+                  <ol class="list-decimal space-y-1 pl-4">
+                    <li>
+                      登录
+                      <a
+                        href="https://chatgpt.com"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="text-primary hover:underline"
+                      >
+                        chatgpt.com
+                      </a>
+                      并保持会话。
+                    </li>
+                    <li>
+                      在同一浏览器打开
+                      <a
+                        href="https://chatgpt.com/api/auth/session"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="text-primary hover:underline"
+                      >
+                        /api/auth/session
+                      </a>
+                      页面。
+                    </li>
+                    <li>
+                      页面返回的 JSON 数据中
+                      <span class="font-mono text-slate-700">user.email</span>
+                      字段即为当前绑定的邮箱。
+                    </li>
+                  </ol>
+                </details>
               </AlertDescription>
             </Alert>
 
@@ -202,7 +248,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, reactive, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -212,6 +258,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ArrowLeft, ShieldCheck } from "lucide-vue-next";
 import { toast } from "@/components/ui/toast";
 import { Card as requestCard } from "../apijs/uts";
+import ConfirmDialog from "@/components/ConfirmDialog.vue";
 
 type InviteRecord = {
   email: string;
@@ -252,8 +299,23 @@ type StoredCardState = {
   orderInfo?: OrderInfo | null;
 };
 
-type ModalApi = {
-  showModal?: (options: Record<string, unknown>) => Promise<{ confirm: boolean; cancel?: boolean }>;
+type NormalizePayloadContext = {
+  card: string;
+  email: string;
+  message?: string;
+  previousOrder: OrderInfo | null;
+  previousCard: CardInfo | null;
+};
+
+type NormalizedEntities = {
+  order: OrderInfo | null;
+  card: CardInfo | null;
+};
+
+type ConfirmationRequest = {
+  card: string;
+  email: string;
+  afterSales: number | null;
 };
 
 type StatusKey = "unused" | "used" | "locked";
@@ -304,6 +366,19 @@ const emailError = ref<string | null>(null);
 const emailSuccess = ref<string | null>(null);
 const lastVerified = ref<number | null>(null);
 const sendingInvite = ref(false);
+const confirmDialogState = reactive<{
+  open: boolean;
+  card: string;
+  email: string;
+  afterSales: number | null;
+}>({
+  open: false,
+  card: "",
+  email: "",
+  afterSales: null,
+});
+
+let resolveConfirmation: ((result: boolean) => void) | null = null;
 
 const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z0-9]{2,}$/;
 
@@ -389,6 +464,29 @@ const persistState = (state: StoredCardState) => {
   window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 };
 
+const requestEmailConfirmation = (payload: ConfirmationRequest) => {
+  confirmDialogState.card = payload.card;
+  confirmDialogState.email = payload.email;
+  confirmDialogState.afterSales = payload.afterSales;
+  confirmDialogState.open = true;
+
+  return new Promise<boolean>((resolve) => {
+    resolveConfirmation = resolve;
+  });
+};
+
+const handleConfirmDialog = (confirmed: boolean) => {
+  confirmDialogState.open = false;
+  if (resolveConfirmation) {
+    resolveConfirmation(confirmed);
+    resolveConfirmation = null;
+  }
+
+  confirmDialogState.card = "";
+  confirmDialogState.email = "";
+  confirmDialogState.afterSales = null;
+};
+
 const handleEmailSubmit = async () => {
   if (statusKey.value !== "unused") {
     toast.error("当前卡密无需重新提交邮箱");
@@ -416,28 +514,18 @@ const handleEmailSubmit = async () => {
     return;
   }
 
-  if (typeof window !== "undefined") {
-    const modalApi = (window as typeof window & { Tm?: ModalApi }).Tm;
-    if (modalApi?.showModal) {
-      const confirmResult = await modalApi.showModal({
-        title: "确认提交邮箱",
-        content: `我们将把邀请发送至：${teamEmail.value}\n请确认邮箱无误后继续。`,
-        confirmText: "确认提交",
-        cancelText: "返回修改",
-        showCancel: true,
-        contentAlign: "left",
-      });
+  const confirmed = await requestEmailConfirmation({
+    card: cardKey.value,
+    email: teamEmail.value,
+    afterSales: afterSalesDays.value,
+  });
 
-      if (!confirmResult?.confirm) {
-        return;
-      }
-    } else if (!window.confirm(`我们将把邀请发送至：${teamEmail.value}\n请确认邮箱无误后继续。`)) {
-      return;
-    }
+  if (!confirmed) {
+    return;
   }
 
   submitting.value = true;
-  const loadingId = toast.loading("正在绑定邮箱...");
+  const loadingId = toast.loading("正在创建订单...");
 
   try {
     const response = await requestCard({
@@ -448,54 +536,56 @@ const handleEmailSubmit = async () => {
       },
     });
 
-    const successMessage = response?.msg ?? "提交成功，我们会尽快发送邀请。";
+    if (!response?.ok) {
+      const errorMessage = response?.msg ?? "创建订单失败，请稍后再试或联系客服。";
+      emailError.value = errorMessage;
+      toast.error(errorMessage, { id: loadingId });
+      return;
+    }
+
+    const { order: createdOrder, card: latestCard } = normalizeApiPayload(response?.data, {
+      card: cardKey.value,
+      email: teamEmail.value,
+      message: response?.msg,
+      previousOrder: storedState.value?.orderInfo ?? null,
+      previousCard: storedState.value?.cardInfo ?? null,
+    });
+
+    if (!createdOrder) {
+      const errorMessage = "返回数据缺少订单信息，请稍后再试或联系客服。";
+      emailError.value = errorMessage;
+      toast.error(errorMessage, { id: loadingId });
+      return;
+    }
+
+    const successMessage = response?.msg ?? "订单创建成功，我们会尽快发送邀请。";
     toast.success(successMessage, { id: loadingId });
     emailSuccess.value = successMessage;
     submitted.value = true;
 
     const now = Date.now();
     const record: InviteRecord = {
-      email: teamEmail.value,
+      email: createdOrder.Order_us_Email ?? teamEmail.value,
       timestamp: now,
       type: "初次提交",
-      message: response?.msg,
-      teamId: storedState.value?.card ?? cardKey.value,
+      message: successMessage,
+      teamId: createdOrder.TeamCard ?? cardKey.value,
     };
-
-    const responseOrder = (response as unknown as { data?: { Order?: OrderInfo } })?.data?.Order;
-
-    const derivedOrderInfo: OrderInfo =
-      responseOrder ??
-      ({
-        id: storedState.value?.orderInfo?.id ?? Date.now(),
-        OrderTeamID: storedState.value?.orderInfo?.OrderTeamID ?? storedState.value?.card ?? cardKey.value,
-        Order_us_Email: teamEmail.value,
-        AfterSales: storedState.value?.orderInfo?.AfterSales ?? cardInfo.value?.AfterSales ?? 0,
-        TeamOrderState: storedState.value?.orderInfo?.TeamOrderState ?? "o2",
-        TeamCard: storedState.value?.orderInfo?.TeamCard ?? storedState.value?.card ?? cardKey.value,
-        AddTime:
-          ensureMilliseconds(
-            storedState.value?.orderInfo?.AddTime ??
-              (cardInfo.value?.AddTime ? ensureMilliseconds(cardInfo.value.AddTime) : Date.now()),
-          ),
-        UpdTime: Date.now(),
-        Content: response?.msg ?? storedState.value?.orderInfo?.Content ?? "",
-      } as OrderInfo);
 
     const nextState: StoredCardState = {
       card: cardKey.value,
       verifiedAt: storedState.value?.verifiedAt ?? now,
-      email: teamEmail.value,
+      email: createdOrder.Order_us_Email ?? teamEmail.value,
       inviteCount: (storedState.value?.inviteCount ?? 0) + 1,
       history: [record, ...(storedState.value?.history ?? [])],
-      cardInfo: storedState.value?.cardInfo ?? null,
-      orderInfo: derivedOrderInfo,
+      cardInfo: latestCard ?? storedState.value?.cardInfo ?? null,
+      orderInfo: createdOrder,
     };
 
     storedState.value = nextState;
     persistState(nextState);
 
-    await sendInvite({ order: derivedOrderInfo, silent: true });
+    await sendInvite({ order: createdOrder, silent: true });
   } catch (error) {
     const fallbackMessage =
       error instanceof Error ? error.message : "提交失败，请稍后再试或联系客服。";
@@ -516,6 +606,13 @@ const sendInvite = async (options?: { order?: OrderInfo; silent?: boolean }) => 
     toast.error("当前卡密未绑定订单");
     return;
   }
+
+  const orderId = Number(targetOrder.id);
+  if (!Number.isFinite(orderId) || orderId <= 0) {
+    toast.error("订单编号缺失，无法发送邀请");
+    return;
+  }
+
   if (sendingInvite.value) {
     return;
   }
@@ -524,63 +621,29 @@ const sendInvite = async (options?: { order?: OrderInfo; silent?: boolean }) => 
   try {
     const response = await requestCard({
       msgoogle: "GetTeamApi",
-      data: { int: targetOrder.id },
+      data: { int: orderId },
     });
     if (response?.ok) {
-      toast.success(response.msg ?? "邀请发送成功。", { id: loadingId });
+      const successMessage = response.msg ?? "邀请发送成功。";
+      toast.success(successMessage, { id: loadingId });
       const rawData = (response as unknown as { data?: unknown })?.data;
-
-      let latestOrder: OrderInfo | null = null;
-      let latestCard: CardInfo | null = null;
-
-      if (rawData && typeof rawData === "object") {
-        const maybeOrder = rawData as Partial<OrderInfo>;
-        if (
-          "OrderTeamID" in maybeOrder ||
-          "Order_us_Email" in maybeOrder ||
-          "TeamOrderState" in maybeOrder
-        ) {
-          latestOrder = {
-            id: maybeOrder.id ?? targetOrder.id,
-            OrderTeamID: maybeOrder.OrderTeamID ?? targetOrder.OrderTeamID,
-            Order_us_Email: maybeOrder.Order_us_Email ?? targetOrder.Order_us_Email,
-            AfterSales: maybeOrder.AfterSales ?? targetOrder.AfterSales,
-            TeamOrderState: maybeOrder.TeamOrderState ?? targetOrder.TeamOrderState,
-            TeamCard: maybeOrder.TeamCard ?? targetOrder.TeamCard,
-            AddTime: ensureMilliseconds(maybeOrder.AddTime ?? targetOrder.AddTime),
-            UpdTime: ensureMilliseconds(maybeOrder.UpdTime ?? Date.now()),
-            Content: maybeOrder.Content ?? targetOrder.Content,
-          };
-        } else if ("Order" in (rawData as Record<string, unknown>)) {
-          const nested = (rawData as { Order?: OrderInfo; Card?: CardInfo }).Order ?? null;
-          if (nested) {
-            latestOrder = {
-              ...nested,
-              AddTime: ensureMilliseconds(nested.AddTime),
-              UpdTime: ensureMilliseconds(nested.UpdTime ?? Date.now()),
-            };
-          }
-          if ("Card" in (rawData as Record<string, unknown>)) {
-            const nestedCard = (rawData as { Card?: CardInfo }).Card;
-            if (nestedCard) {
-              latestCard = {
-                ...nestedCard,
-                AddTime: ensureMilliseconds(nestedCard.AddTime),
-                UpdTime: ensureMilliseconds(nestedCard.UpdTime ?? Date.now()),
-              };
-            }
-          }
-        }
-      }
+      const normalizedTarget: OrderInfo = { ...targetOrder, id: orderId };
+      const { order: latestOrder, card: latestCard } = normalizeApiPayload(rawData, {
+        card: cardKey.value,
+        email: normalizedTarget.Order_us_Email ?? storedState.value?.email ?? "",
+        message: successMessage,
+        previousOrder: normalizedTarget,
+        previousCard: storedState.value?.cardInfo ?? null,
+      });
 
       if (!latestOrder) {
         await refreshCardState();
       } else {
-          const nextState: StoredCardState = {
-            card: cardKey.value,
-            verifiedAt: Date.now(),
-            email: latestOrder.Order_us_Email ?? storedState.value?.email ?? "",
-            inviteCount: storedState.value?.inviteCount ?? 0,
+        const nextState: StoredCardState = {
+          card: cardKey.value,
+          verifiedAt: Date.now(),
+          email: latestOrder.Order_us_Email ?? storedState.value?.email ?? "",
+          inviteCount: storedState.value?.inviteCount ?? 0,
           history: storedState.value?.history ?? [],
           cardInfo: latestCard ?? storedState.value?.cardInfo ?? null,
           orderInfo: latestOrder,
@@ -603,12 +666,221 @@ const sendInvite = async (options?: { order?: OrderInfo; silent?: boolean }) => 
   }
 };
 
+
+
+function normalizeApiPayload(payload: unknown, context: NormalizePayloadContext): NormalizedEntities {
+  const { order: rawOrder, card: rawCard } = splitPayloadEntities(payload);
+  const order = normalizeOrderInfo(rawOrder, context);
+  const card = normalizeCardInfo(rawCard, { cardKey: context.card, previous: context.previousCard });
+  return {
+    order,
+    card,
+  };
+}
+
+function splitPayloadEntities(payload: unknown): { order: unknown; card: unknown } {
+  if (payload == null) {
+    return { order: null, card: null };
+  }
+
+  if (typeof payload === "number" || typeof payload === "string") {
+    return { order: payload, card: null };
+  }
+
+  if (typeof payload !== "object") {
+    return { order: null, card: null };
+  }
+
+  const record = payload as Record<string, unknown>;
+
+  if ("Order" in record || "order" in record || "Card" in record || "card" in record) {
+    return {
+      order: "Order" in record ? record.Order : "order" in record ? record.order : null,
+      card: "Card" in record ? record.Card : "card" in record ? record.card : null,
+    };
+  }
+
+  if ("data" in record && record.data && typeof record.data === "object") {
+    return splitPayloadEntities(record.data);
+  }
+
+  return { order: record, card: null };
+}
+
+function normalizeOrderInfo(raw: unknown, context: NormalizePayloadContext): OrderInfo | null {
+  const fallbackOrder = context.previousOrder ? { ...context.previousOrder } : null;
+  const fallbackCard = context.previousCard ?? null;
+
+  if (raw == null) {
+    return fallbackOrder;
+  }
+
+  let record: Record<string, unknown>;
+  if (typeof raw === "number" || typeof raw === "string") {
+    record = { id: raw };
+  } else if (typeof raw === "object") {
+    record = raw as Record<string, unknown>;
+  } else {
+    return fallbackOrder;
+  }
+
+  const id =
+    toPositiveInt(record.id) ??
+    toPositiveInt(record.ID) ??
+    toPositiveInt(record.orderId) ??
+    toPositiveInt(record.order_id) ??
+    toPositiveInt(record.int);
+
+  if (!id) {
+    return fallbackOrder;
+  }
+
+  const resolvedEmail =
+    typeof record.Order_us_Email === "string" && record.Order_us_Email.trim()
+      ? record.Order_us_Email.trim()
+      : context.email || fallbackOrder?.Order_us_Email || "";
+
+  const resolvedTeamCard =
+    typeof record.TeamCard === "string" && record.TeamCard.trim()
+      ? record.TeamCard.trim()
+      : fallbackOrder?.TeamCard ?? context.card;
+
+  const resolvedOrderTeamId =
+    typeof record.OrderTeamID === "string" && record.OrderTeamID.trim()
+      ? record.OrderTeamID.trim()
+      : fallbackOrder?.OrderTeamID ?? resolvedTeamCard;
+
+  const resolvedState =
+    typeof record.TeamOrderState === "string" && record.TeamOrderState.trim()
+      ? record.TeamOrderState.trim()
+      : fallbackOrder?.TeamOrderState ?? "o1";
+
+  const resolvedAfterSales =
+    resolveNumber(record.AfterSales) ?? fallbackOrder?.AfterSales ?? fallbackCard?.AfterSales ?? 0;
+
+  const resolvedContent =
+    typeof record.Content === "string" && record.Content.trim()
+      ? record.Content.trim()
+      : fallbackOrder?.Content ?? context.message ?? "";
+
+  const resolvedAddTime =
+    resolveNumber(record.AddTime) ??
+    resolveNumber((record as Record<string, unknown>).addTime) ??
+    fallbackOrder?.AddTime ??
+    fallbackCard?.AddTime ??
+    Date.now();
+
+  const resolvedUpdTime =
+    resolveNumber(record.UpdTime) ??
+    resolveNumber((record as Record<string, unknown>).updTime) ??
+    Date.now();
+
+  return {
+    id,
+    OrderTeamID: resolvedOrderTeamId,
+    Order_us_Email: resolvedEmail,
+    AfterSales: resolvedAfterSales,
+    TeamOrderState: resolvedState,
+    TeamCard: resolvedTeamCard,
+    AddTime: ensureMilliseconds(resolvedAddTime),
+    UpdTime: ensureMilliseconds(resolvedUpdTime),
+    Content: resolvedContent,
+  };
+}
+
+function normalizeCardInfo(
+  raw: unknown,
+  context: { cardKey: string; previous: CardInfo | null },
+): CardInfo | null {
+  const previous = context.previous ? { ...context.previous } : null;
+
+  if (raw == null) {
+    return previous;
+  }
+
+  if (typeof raw !== "object") {
+    return previous;
+  }
+
+  const record = raw as Record<string, unknown>;
+
+  const id =
+    toPositiveInt(record.id) ??
+    toPositiveInt(record.ID) ??
+    toPositiveInt(record.cardId) ??
+    toPositiveInt(record.card_id);
+
+  if (!id) {
+    return previous;
+  }
+
+  const resolvedTeamCard =
+    typeof record.TeamCard === "string" && record.TeamCard.trim()
+      ? record.TeamCard.trim()
+      : previous?.TeamCard ?? context.cardKey;
+
+  const resolvedState =
+    typeof record.TeamCardState === "string" && record.TeamCardState.trim()
+      ? record.TeamCardState.trim()
+      : previous?.TeamCardState ?? "";
+
+  const resolvedAfterSales =
+    resolveNumber(record.AfterSales) ?? previous?.AfterSales ?? 0;
+
+  const resolvedAddTime =
+    resolveNumber(record.AddTime) ??
+    resolveNumber((record as Record<string, unknown>).addTime) ??
+    previous?.AddTime ??
+    Date.now();
+
+  const resolvedUpdTime =
+    resolveNumber(record.UpdTime) ??
+    resolveNumber((record as Record<string, unknown>).updTime) ??
+    previous?.UpdTime ??
+    Date.now();
+
+  return {
+    id,
+    TeamCard: resolvedTeamCard,
+    TeamCardState: resolvedState,
+    AfterSales: resolvedAfterSales,
+    AddTime: ensureMilliseconds(resolvedAddTime),
+    UpdTime: ensureMilliseconds(resolvedUpdTime),
+  };
+}
+
+function resolveNumber(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (!trimmed) {
+      return null;
+    }
+    const parsed = Number(trimmed);
+    if (Number.isFinite(parsed)) {
+      return parsed;
+    }
+  }
+  return null;
+}
+
+function toPositiveInt(value: unknown): number | null {
+  const numeric = resolveNumber(value);
+  if (numeric === null) {
+    return null;
+  }
+  const intValue = Math.trunc(numeric);
+  return intValue > 0 ? intValue : null;
+}
+
 const switchTeam = () => {
   if (!orderInfo.value) {
     toast.error("当前卡密未绑定订单");
     return;
   }
-  toast.info("已提交换团申请，稍后会有工作人员与您确认。");
+  toast.info("当前功能暂未接入");
 };
 
 const optimizeMembers = () => {
@@ -616,7 +888,7 @@ const optimizeMembers = () => {
     toast.error("当前卡密未绑定订单");
     return;
   }
-  toast.info("已记录成员优化需求，请等待售后团队跟进。");
+  toast.info("当前功能暂未接入");
 };
 
 const openSupport = () => {
