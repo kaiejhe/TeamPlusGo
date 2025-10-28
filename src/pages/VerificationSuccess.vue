@@ -11,28 +11,15 @@
     <div class="mx-auto w-full max-w-4xl space-y-6">
       <Card class="shadow-sm">
         <CardHeader class="space-y-4">
-          <div class="flex flex-wrap items-center justify-between gap-3">
-            <div class="space-y-2">
-              <CardTitle class="text-3xl font-semibold tracking-tight text-slate-900 md:text-4xl">
-                卡密详情
-              </CardTitle>
-              <CardDescription v-if="statusMeta.description" class="text-sm text-slate-600 md:text-base">
-                {{ statusMeta.description }}
-              </CardDescription>
-            </div>
-            <div class="flex flex-wrap items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                class="inline-flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-slate-900"
-                @click="goBack"
-              >
-                <ArrowLeft class="h-4 w-4" />
-                返回首页
-              </Button>
-            </div>
-          </div>
-
+          <VerificationSummaryHeader
+            :title="headerMeta.title"
+            :description="headerMeta.description"
+            back-label="返回首页"
+            @back="goBack"
+          />
+          <CardDescription v-if="statusMeta.description" class="text-sm text-slate-600 md:text-base">
+            {{ statusMeta.description }}
+          </CardDescription>
         </CardHeader>
       </Card>
 
@@ -248,7 +235,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { ArrowLeft, ShieldCheck } from "lucide-vue-next";
+import VerificationSummaryHeader from "@/components/VerificationSummaryHeader.vue";
+import { ShieldCheck } from "lucide-vue-next";
 import { toast } from "@/components/ui/toast";
 import { Card as requestCard } from "../apijs/uts";
 import ConfirmDialog from "@/components/ConfirmDialog.vue";
@@ -265,6 +253,7 @@ type CardInfo = {
   id: number;
   TeamCard: string;
   TeamCardState: string;
+  TeamType?: string;
   AfterSales: number;
   AddTime: number;
   UpdTime: number | null;
@@ -380,6 +369,38 @@ const orderInfo = computed(() => storedState.value?.orderInfo ?? null);
 
 const statusKey = computed<StatusKey>(() => deriveStatus(cardInfo.value, orderInfo.value));
 const statusMeta = computed(() => STATUS_META[statusKey.value]);
+const TEAM_TYPE_COPY: Record<"team" | "plus", { title: string; description: string }> = {
+  team: {
+    title: "Team 团队自动邀请",
+    description: "自动发送团队邀请，适合快速为成员开通使用权限。",
+  },
+  plus: {
+    title: "Plus 成品号",
+    description: "提供即开即用的 Plus 成品账号，登录即可体验完整功能。",
+  },
+};
+const teamType = computed(() => {
+  const candidates: Array<string | null | undefined> = [cardInfo.value?.TeamType, storedState.value?.cardInfo?.TeamType];
+  for (const value of candidates) {
+    if (typeof value === "string" && value.trim()) {
+      return value.trim();
+    }
+  }
+  return "";
+});
+const headerMeta = computed(() => {
+  const normalized = teamType.value.toLowerCase();
+  if (normalized === "team") {
+    return TEAM_TYPE_COPY.team;
+  }
+  if (normalized === "plus") {
+    return TEAM_TYPE_COPY.plus;
+  }
+  return {
+    title: "卡密详情",
+    description: "查看卡密状态与后续操作指引。",
+  };
+});
 const afterSalesDays = computed(() => orderInfo.value?.AfterSales ?? cardInfo.value?.AfterSales ?? null);
 const lastVerifiedDisplay = computed(() => formatTimestamp(lastVerified.value));
 const ORDER_STATUS_META: Record<
@@ -816,6 +837,10 @@ function normalizeCardInfo(
     typeof record.TeamCardState === "string" && record.TeamCardState.trim()
       ? record.TeamCardState.trim()
       : previous?.TeamCardState ?? "";
+  const resolvedTeamType =
+    typeof record.TeamType === "string" && record.TeamType.trim()
+      ? record.TeamType.trim()
+      : previous?.TeamType ?? "";
 
   const resolvedAfterSales =
     resolveNumber(record.AfterSales) ?? previous?.AfterSales ?? 0;
@@ -836,6 +861,7 @@ function normalizeCardInfo(
     id,
     TeamCard: resolvedTeamCard,
     TeamCardState: resolvedState,
+    TeamType: resolvedTeamType,
     AfterSales: resolvedAfterSales,
     AddTime: ensureMilliseconds(resolvedAddTime),
     UpdTime: ensureMilliseconds(resolvedUpdTime),
