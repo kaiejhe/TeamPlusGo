@@ -40,7 +40,9 @@
               </CardDescription>
             </div>
             <div class="flex flex-wrap items-center gap-2 text-sm text-muted-foreground md:text-base">
-              <span class="font-semibold text-foreground">{{ statusMeta.label }}</span>
+              <span :class="['font-semibold', statusMeta.toneClass ?? 'text-foreground']">
+                {{ statusMeta.label }}
+              </span>
             </div>
           </div>
         </CardHeader>
@@ -111,7 +113,7 @@
                       <p class="text-[11px] text-muted-foreground md:text-xs">团队优化、更换团队、发送邀请快捷入口</p>
                     </div>
                   </div>
-                  <div class="grid gap-2 sm:grid-cols-3">
+                  <div class="grid grid-cols-1 gap-2 min-[420px]:grid-cols-2 sm:grid-cols-3">
                     <Button
                       variant="default"
                       class="w-full justify-center text-xs font-medium md:text-sm"
@@ -121,7 +123,7 @@
                       发送邀请链接
                     </Button>
                     <Button
-                      variant="default"
+                      variant="secondary"
                       class="w-full justify-center text-xs font-medium md:text-sm"
                       @click="switchTeam"
                       :disabled="!orderInfo"
@@ -129,8 +131,8 @@
                       更换团队
                     </Button>
                     <Button
-                      variant="default"
-                      class="w-full justify-center text-xs font-medium md:text-sm"
+                      variant="outline"
+                      class="w-full justify-center text-xs font-medium text-primary hover:bg-primary/10 md:text-sm"
                       @click="optimizeMembers"
                       :disabled="!orderInfo"
                     >
@@ -145,7 +147,7 @@
                       <p class="text-[11px] text-muted-foreground md:text-xs">Plus 成品号 / Plus 代充 / Grok 代充</p>
                     </div>
                   </div>
-                  <div class="grid gap-3 sm:grid-cols-3">
+                  <div class="grid grid-cols-1 gap-3 min-[480px]:grid-cols-2 lg:grid-cols-3">
                     <div
                       v-for="feature in uiExtensionFeatures"
                       :key="feature.id"
@@ -168,7 +170,7 @@
             <div class="grid gap-3 rounded-xl border border-border/60 bg-muted/50 p-4 text-xs md:text-sm">
               <div class="flex items-center justify-between gap-2">
                 <span class="text-muted-foreground">卡密状态</span>
-                <span class="font-medium text-foreground">{{ statusMeta.label }}</span>
+                <span :class="['font-medium', statusMeta.toneClass ?? 'text-foreground']">{{ statusMeta.label }}</span>
               </div>
               <div class="flex items-center justify-between gap-2" v-if="afterSalesDays !== null">
                 <span class="text-muted-foreground">售后时长</span>
@@ -312,7 +314,9 @@
 
             <section v-else class="space-y-3 text-xs text-muted-foreground md:text-sm">
               <Alert :variant="statusKey === 'locked' ? 'destructive' : 'default'">
-                <AlertTitle class="text-sm font-semibold text-foreground md:text-base">{{ statusMeta.label }}</AlertTitle>
+                <AlertTitle :class="['text-sm font-semibold md:text-base', statusMeta.toneClass ?? 'text-foreground']">
+                  {{ statusMeta.label }}
+                </AlertTitle>
                 <AlertDescription class="text-xs text-muted-foreground md:text-sm">
                   {{
                     statusKey === "locked"
@@ -429,6 +433,7 @@ const STATUS_META: Record<
     badgeVariant: "default" | "secondary" | "destructive";
     title: string;
     hint: string;
+    toneClass: string;
   }
 > = {
   unused: {
@@ -437,6 +442,7 @@ const STATUS_META: Record<
     badgeVariant: "secondary",
     title: "待绑定邮箱",
     hint: "填写收件邮箱，系统会自动发送邀请邮件。",
+    toneClass: "text-amber-600",
   },
   used: {
     label: "已使用",
@@ -444,6 +450,7 @@ const STATUS_META: Record<
     badgeVariant: "default",
     title: "已绑定订单",
     hint: "",
+    toneClass: "text-emerald-600",
   },
   locked: {
     label: "已锁定",
@@ -451,6 +458,7 @@ const STATUS_META: Record<
     badgeVariant: "destructive",
     title: "卡密已锁定",
     hint: "",
+    toneClass: "text-destructive",
   },
 };
 
