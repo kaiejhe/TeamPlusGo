@@ -1,5 +1,5 @@
 <template>
-  <main class="min-h-screen bg-background px-4 py-12">
+  <main class="min-h-[100dvh] bg-background px-4 py-8 md:py-10">
     <ConfirmDialog
       :open="confirmDialogState.open"
       :card="confirmDialogState.card"
@@ -8,7 +8,7 @@
       @confirm="handleConfirmDialog(true)"
       @cancel="handleConfirmDialog(false)"
     />
-    <div class="mx-auto w-full max-w-4xl space-y-8">
+    <div class="mx-auto w-full max-w-4xl space-y-6">
       <Card class="border border-border/80 bg-card shadow-sm">
         <CardHeader class="space-y-0">
           <VerificationSummaryHeader
@@ -21,21 +21,21 @@
       </Card>
 
       <Card class="border border-border/80 bg-card shadow-sm">
-        <CardHeader class="space-y-3">
-          <CardTitle class="flex items-center gap-2 text-xl text-foreground">
+        <CardHeader class="space-y-2">
+          <CardTitle class="flex items-center gap-2 text-lg font-semibold text-foreground md:text-xl">
             <ShieldCheck class="h-5 w-5 text-primary" />
             {{ statusMeta.title }}
           </CardTitle>
-          <CardDescription v-if="statusMeta.description" class="text-sm text-muted-foreground">
+          <CardDescription v-if="statusMeta.description" class="text-xs text-muted-foreground md:text-sm">
             {{ statusMeta.description }}
           </CardDescription>
-          <CardDescription v-if="statusMeta.hint" class="text-sm text-muted-foreground">
+          <CardDescription v-if="statusMeta.hint" class="text-xs text-muted-foreground md:text-sm">
             {{ statusMeta.hint }}
           </CardDescription>
         </CardHeader>
 
-        <CardContent class="space-y-6 text-sm text-muted-foreground">
-          <div class="grid gap-3 rounded-xl border border-border/60 bg-muted/50 p-4 text-sm">
+        <CardContent class="space-y-5 text-xs text-muted-foreground md:text-sm">
+          <div class="grid gap-3 rounded-xl border border-border/60 bg-muted/50 p-4 text-xs md:text-sm">
             <div class="flex items-center justify-between gap-2">
               <span class="text-muted-foreground">卡密状态</span>
               <span class="font-medium text-foreground">{{ statusMeta.label }}</span>
@@ -60,41 +60,41 @@
           </div>
           <div class="grid gap-4 rounded-xl border border-border/40 bg-muted/30 px-4 py-3 shadow-sm">
             <div class="flex flex-wrap items-center justify-between gap-3">
-              <div class="space-y-1 text-sm">
+              <div class="space-y-1 text-xs md:text-sm">
                 <p class="text-xs font-medium uppercase tracking-wide text-muted-foreground">Team 兑换码</p>
-                <p class="font-mono text-base font-medium text-foreground">{{ cardKey }}</p>
+                <p class="font-mono text-sm font-medium text-foreground md:text-base">{{ cardKey }}</p>
               </div>
               <div class="text-right">
                 <p class="text-xs font-medium uppercase tracking-wide text-muted-foreground">最近检测</p>
-                <p class="text-sm font-medium text-muted-foreground">{{ lastVerifiedDisplay }}</p>
+                <p class="text-xs font-medium text-muted-foreground md:text-sm">{{ lastVerifiedDisplay }}</p>
               </div>
             </div>
 
-            <div class="grid gap-3 text-sm sm:grid-cols-2">
+            <div class="grid gap-3 text-xs md:text-sm sm:grid-cols-2">
               <div class="space-y-1">
                 <p class="text-xs font-medium uppercase tracking-wide text-muted-foreground">绑定邮箱</p>
-                <p class="font-mono text-sm text-foreground">
+                <p class="font-mono text-xs text-foreground md:text-sm">
                   {{ orderInfo?.Order_us_Email ?? storedState?.email ?? '—' }}
                 </p>
               </div>
               <div class="space-y-1">
                 <p class="text-xs font-medium uppercase tracking-wide text-muted-foreground">Team ID</p>
-                <p class="font-mono text-[13px] text-foreground">
+                <p class="font-mono text-[11px] text-foreground md:text-[13px]">
                   {{ orderInfo?.OrderTeamID ?? orderInfo?.TeamCard ?? cardKey }}
                 </p>
               </div>
             </div>
           </div>
 
-          <section v-if="statusKey === 'unused'" class="space-y-5">
+          <section v-if="statusKey === 'unused'" class="space-y-4">
             <Alert variant="default" class="border border-border/60 bg-muted/40">
-              <AlertDescription class="space-y-2 text-sm text-muted-foreground">
+              <AlertDescription class="space-y-2 text-xs text-muted-foreground md:text-sm">
                 <p class="leading-relaxed">
                   绑定邮箱前，请先确认 GPT 注册邮箱，确保填写的信息准确无误。
                 </p>
-                <details class="group space-y-1 text-xs leading-relaxed text-muted-foreground">
+                <details class="group space-y-1 text-[11px] leading-relaxed text-muted-foreground md:text-xs">
                   <summary
-                    class="cursor-pointer text-sm font-medium text-primary transition hover:underline group-open:text-primary/80"
+                    class="cursor-pointer text-xs font-medium text-primary transition hover:underline group-open:text-primary/80 md:text-sm"
                   >
                     如何确认 GPT 注册邮箱？
                   </summary>
@@ -133,7 +133,7 @@
               </AlertDescription>
             </Alert>
 
-            <form class="space-y-5" @submit.prevent="handleEmailSubmit">
+            <form class="space-y-4" @submit.prevent="handleEmailSubmit">
               <div class="space-y-2">
                 <label class="text-xs font-medium uppercase tracking-wide text-muted-foreground" for="team-email">
                   接收邀请邮箱
@@ -144,24 +144,24 @@
                   type="email"
                   placeholder="例如：yourname@example.com"
                   :disabled="submitting"
-                  class="h-12"
+                  class="h-11"
                 />
               </div>
 
-              <div class="space-y-3">
+              <div class="space-y-2">
                 <Alert v-if="emailError" variant="destructive">
                   <AlertTitle>提交遇到问题</AlertTitle>
                   <AlertDescription>{{ emailError }}</AlertDescription>
                 </Alert>
                 <div
                   v-if="emailSuccess && !emailError"
-                  class="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700"
+                  class="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-xs text-emerald-700 md:text-sm"
                 >
                   {{ emailSuccess }}
                 </div>
               </div>
 
-              <Button type="submit" size="lg" class="w-full justify-center gap-2 text-base" :disabled="submitting">
+              <Button type="submit" size="lg" class="w-full justify-center gap-2 text-sm md:text-base" :disabled="submitting">
                 <svg
                   v-if="submitting"
                   class="h-5 w-5 animate-spin"
@@ -180,10 +180,10 @@
             </form>
           </section>
 
-          <section v-else class="space-y-4 text-sm text-muted-foreground">
+          <section v-else class="space-y-3 text-xs text-muted-foreground md:text-sm">
             <Alert :variant="statusKey === 'locked' ? 'destructive' : 'default'">
-              <AlertTitle>{{ statusMeta.label }}</AlertTitle>
-              <AlertDescription>
+              <AlertTitle class="text-sm font-semibold text-foreground md:text-base">{{ statusMeta.label }}</AlertTitle>
+              <AlertDescription class="text-xs text-muted-foreground md:text-sm">
                 {{
                   statusKey === "locked"
                     ? "当前卡密已锁定，如需继续处理请联系管理员或客服。"
