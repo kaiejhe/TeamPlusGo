@@ -1,7 +1,5 @@
 import { createRouter, createWebHistory } from "vue-router";
 import Home from "../pages/Home.vue";
-import Purchase from "../pages/Purchase.vue";
-import Support from "../pages/Support.vue";
 import VerificationSuccess from "../pages/VerificationSuccess.vue";
 
 const STORAGE_KEY = "team-verified-card";
@@ -18,16 +16,6 @@ const router = createRouter({
       path: "/verify-success",
       name: "VerificationSuccess",
       component: VerificationSuccess,
-    },
-    {
-      path: "/purchase",
-      name: "PurchaseCard",
-      component: Purchase,
-    },
-    {
-      path: "/support",
-      name: "Support",
-      component: Support,
     },
   ],
 });

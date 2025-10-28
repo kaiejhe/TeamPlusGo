@@ -233,13 +233,6 @@
                 </Button>
               </div>
             </template>
-            <template v-else>
-              <div class="flex flex-wrap gap-2">
-                <Button variant="outline" class="flex-1 min-w-[140px]" @click="openSupport">
-                  联系客服
-                </Button>
-              </div>
-            </template>
           </section>
         </CardContent>
       </Card>
@@ -889,10 +882,6 @@ const optimizeMembers = () => {
     return;
   }
   toast.info("当前功能暂未接入");
-};
-
-const openSupport = () => {
-  router.push({ name: "Support" });
 };
 
 const refreshCardState = async () => {
