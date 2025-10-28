@@ -21,29 +21,58 @@
       </Card>
 
       <Card class="border border-border/80 bg-card shadow-sm">
-        <CardHeader v-if="statusKey === 'used'" class="space-y-4">
-          <div class="flex flex-wrap items-start justify-between gap-4">
+        <CardHeader v-if="statusKey === 'used'" class="space-y-6 pb-6">
+          <div class="flex flex-wrap items-start justify-between gap-6">
             <div class="space-y-1">
-              <CardTitle class="flex items-center gap-2 text-lg font-semibold text-foreground md:text-xl">
+              <CardTitle class="flex items-center gap-2 text-base font-semibold text-foreground md:text-lg">
                 <ShieldCheck class="h-5 w-5 text-primary" />
                 Team 兑换码兑换详情
               </CardTitle>
               <CardDescription class="text-xs text-muted-foreground md:text-sm">
-                核心信息与售后记录一屏查看，方便后续处理。
+                核心字段一目了然，便于后续处理与记录。
               </CardDescription>
             </div>
-            <div class="flex flex-wrap items-center gap-3 text-[11px] font-medium uppercase tracking-wide text-muted-foreground md:text-xs">
-              <div class="flex items-center gap-2">
-                <span>卡密状态</span>
-                <Badge variant="outline" :class="cardStatusBadgeClass">
+            <div class="flex flex-wrap items-start gap-4">
+              <div class="space-y-2">
+                <p class="text-[11px] font-medium uppercase tracking-wide text-muted-foreground md:text-xs">卡密状态</p>
+                <Badge variant="outline" :class="cardStatusBadgeClass" class="px-3 py-1 text-[11px] font-semibold md:text-xs">
                   {{ statusMeta.label }}
                 </Badge>
               </div>
-              <div class="flex items-center gap-2">
-                <span>邀请状态</span>
-                <Badge variant="outline" :class="orderStatusBadgeClass">
+              <div class="space-y-2">
+                <p class="text-[11px] font-medium uppercase tracking-wide text-muted-foreground md:text-xs">邀请状态</p>
+                <Badge variant="outline" :class="orderStatusBadgeClass" class="px-3 py-1 text-[11px] font-semibold md:text-xs">
                   {{ orderStatusMeta.label }}
                 </Badge>
+              </div>
+            </div>
+          </div>
+          <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div v-for="item in usedInfoItems" :key="item.key" class="space-y-2">
+              <p class="text-[11px] font-medium uppercase tracking-wide text-muted-foreground md:text-xs">
+                {{ item.label }}
+              </p>
+              <div class="flex items-center gap-2">
+                <span
+                  :title="item.value"
+                  :class="[
+                    'flex-1 truncate text-sm font-medium text-foreground md:text-base',
+                    item.monospace ? 'font-mono' : '',
+                    item.truncate ? 'max-w-[220px] md:max-w-[260px]' : 'max-w-full',
+                  ]"
+                >
+                  {{ item.displayValue ?? item.value }}
+                </span>
+                <Button
+                  v-if="item.copyValue"
+                  variant="ghost"
+                  size="icon"
+                  class="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground"
+                  @click="copyText(item.copyValue, item.label)"
+                >
+                  <Copy class="h-4 w-4" />
+                  <span class="sr-only">复制 {{ item.label }}</span>
+                </Button>
               </div>
             </div>
           </div>
@@ -63,98 +92,58 @@
 
         <CardContent class="space-y-6 text-xs text-muted-foreground md:text-sm">
           <template v-if="statusKey === 'used'">
-            <div class="space-y-8">
-              <div class="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
-                <div v-for="item in usedPrimaryInfo" :key="item.key" class="space-y-2">
-                  <p class="text-[11px] font-medium uppercase tracking-wide text-muted-foreground md:text-xs">
-                    {{ item.label }}
-                  </p>
-                  <div class="flex items-center gap-2">
-                    <span
-                      :title="item.value"
-                      :class="[
-                        'flex-1 truncate text-sm font-medium text-foreground md:text-base',
-                        item.monospace ? 'font-mono' : '',
-                        item.truncate ? 'max-w-[220px] md:max-w-[260px]' : 'max-w-full',
-                      ]"
-                    >
-                      {{ item.displayValue ?? item.value }}
-                    </span>
-                    <Button
-                      v-if="item.copyValue"
-                      variant="ghost"
-                      size="icon"
-                      class="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground"
-                      @click="copyText(item.copyValue, item.label)"
-                    >
-                      <Copy class="h-4 w-4" />
-                      <span class="sr-only">复制 {{ item.label }}</span>
-                    </Button>
-                  </div>
+            <div class="grid gap-4 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
+              <div class="space-y-4 rounded-xl border border-border/60 bg-card/80 p-5 shadow-sm">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                  <p class="text-sm font-semibold text-foreground md:text-base">操作</p>
+                  <p class="text-[11px] text-muted-foreground md:text-xs">团队与邀请的快捷处理入口</p>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                  <Button
+                    variant="outline"
+                    class="flex-1 min-w-[140px] border-emerald-500 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800"
+                    @click="sendInvite()"
+                    :disabled="!orderInfo || sendingInvite"
+                  >
+                    发送邀请
+                  </Button>
+                  <Button
+                    variant="outline"
+                    class="flex-1 min-w-[140px] border-sky-500 text-sky-700 hover:bg-sky-50 hover:text-sky-800"
+                    @click="switchTeam"
+                    :disabled="!orderInfo"
+                  >
+                    更换团队
+                  </Button>
+                  <Button
+                    variant="outline"
+                    class="flex-1 min-w-[140px] border-indigo-500 text-indigo-700 hover:bg-indigo-50 hover:text-indigo-800"
+                    @click="optimizeMembers"
+                    :disabled="!orderInfo"
+                  >
+                    团队优化
+                  </Button>
                 </div>
               </div>
-
-              <div v-if="usedMetaInfo.length" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                <div v-for="item in usedMetaInfo" :key="item.key" class="space-y-1">
-                  <p class="text-[11px] font-medium uppercase tracking-wide text-muted-foreground md:text-xs">
-                    {{ item.label }}
-                  </p>
-                  <p class="text-sm font-medium text-foreground md:text-base">{{ item.value }}</p>
+              <div class="space-y-4 rounded-xl border border-border/60 bg-card/80 p-5 shadow-sm">
+                <div class="flex items-center justify-between gap-2">
+                  <p class="text-sm font-semibold text-foreground md:text-base">UI 拓展功能</p>
+                  <p class="text-[11px] text-muted-foreground md:text-xs">Plus 与 Grok 增值方案</p>
                 </div>
-              </div>
-
-              <div class="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1.2fr)]">
-                <div class="space-y-4 rounded-xl border border-border/60 bg-card/80 p-5 shadow-sm">
-                  <div class="space-y-1">
-                    <p class="text-sm font-semibold text-foreground md:text-base">操作</p>
-                    <p class="text-xs text-muted-foreground md:text-sm">快速处理邀请与团队协作相关事务。</p>
-                  </div>
-                  <div class="flex flex-wrap gap-2">
-                    <Button
-                      variant="outline"
-                      class="flex-1 min-w-[140px] border-emerald-500 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800"
-                      @click="sendInvite()"
-                      :disabled="!orderInfo || sendingInvite"
-                    >
-                      发送邀请
-                    </Button>
-                    <Button
-                      variant="outline"
-                      class="flex-1 min-w-[140px] border-sky-500 text-sky-700 hover:bg-sky-50 hover:text-sky-800"
-                      @click="switchTeam"
-                      :disabled="!orderInfo"
-                    >
-                      一键换团
-                    </Button>
-                    <Button
-                      variant="outline"
-                      class="flex-1 min-w-[140px] border-indigo-500 text-indigo-700 hover:bg-indigo-50 hover:text-indigo-800"
-                      @click="optimizeMembers"
-                      :disabled="!orderInfo"
-                    >
-                      成员优化
+                <div class="space-y-3">
+                  <div
+                    v-for="feature in uiExtensionFeatures"
+                    :key="feature.id"
+                    class="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border/60 bg-muted/40 px-4 py-3"
+                  >
+                    <div class="space-y-1">
+                      <p class="text-sm font-semibold text-foreground md:text-base">{{ feature.title }}</p>
+                      <p class="text-xs text-muted-foreground md:text-sm">{{ feature.description }}</p>
+                    </div>
+                    <Button variant="secondary" size="sm" class="shrink-0 px-4 text-xs md:text-sm">
+                      进入
                     </Button>
                   </div>
-                </div>
-                <div class="space-y-4 rounded-xl border border-border/60 bg-card/80 p-5 shadow-sm">
-                  <div class="space-y-1">
-                    <p class="text-sm font-semibold text-foreground md:text-base">更多</p>
-                    <p class="text-xs text-muted-foreground md:text-sm">补充信息和售后指引，方便后续处理。</p>
-                  </div>
-                  <ul class="space-y-3 text-xs text-muted-foreground md:text-sm">
-                    <li class="space-y-1">
-                      <p class="text-sm font-medium text-foreground md:text-base">售后说明</p>
-                      <p>售后剩余 {{ usedAfterSalesDisplay }}，如需换绑请提供卡密与绑定邮箱。</p>
-                    </li>
-                    <li class="space-y-1">
-                      <p class="text-sm font-medium text-foreground md:text-base">订单备注</p>
-                      <p>{{ orderInfo?.Content || "暂无备注信息，可根据实际情况补充。" }}</p>
-                    </li>
-                    <li class="space-y-1">
-                      <p class="text-sm font-medium text-foreground md:text-base">历史记录</p>
-                      <p>最近验证时间：{{ lastVerifiedDisplay }}</p>
-                    </li>
-                  </ul>
                 </div>
               </div>
             </div>
@@ -409,6 +398,12 @@ type UsedInfoItem = {
   truncate?: boolean;
 };
 
+type UiExtensionFeature = {
+  id: string;
+  title: string;
+  description: string;
+};
+
 const STATUS_META: Record<
   StatusKey,
   {
@@ -486,6 +481,24 @@ const TEAM_TYPE_COPY: Record<"team" | "plus", { title: string; description: stri
     description: "提供即开即用的 Plus 成品账号，登录即可体验完整功能。",
   },
 };
+
+const uiExtensionFeatures: UiExtensionFeature[] = [
+  {
+    id: "plus-account",
+    title: "Plus 成品号",
+    description: "提供即开即用的账号，登录后立即体验完整功能。",
+  },
+  {
+    id: "plus-topup",
+    title: "Plus 优选号",
+    description: "高质量账号托管与续费支持，保障团队持续可用。",
+  },
+  {
+    id: "grok-service",
+    title: "Grok 代充",
+    description: "代为完成 Grok 功能充值，满足多样化使用需求。",
+  },
+];
 const teamType = computed(() => {
   const candidates: Array<string | null | undefined> = [cardInfo.value?.TeamType, storedState.value?.cardInfo?.TeamType];
   for (const value of candidates) {
@@ -583,6 +596,7 @@ const usedPrimaryInfo = computed<UsedInfoItem[]>(() => {
       value: cardKey.value || "—",
       monospace: true,
       copyValue: cardKey.value || "",
+      truncate: true,
     },
     {
       key: "team",
@@ -591,6 +605,7 @@ const usedPrimaryInfo = computed<UsedInfoItem[]>(() => {
       displayValue: teamId ? formatIdentifier(teamId) : "—",
       monospace: true,
       copyValue: teamId || "",
+      truncate: true,
     },
     {
       key: "email",
@@ -621,20 +636,14 @@ const usedMetaInfo = computed<UsedInfoItem[]>(() => {
     value: formatTimestamp(createdAt),
   });
 
-  meta.push({
-    key: "last-verified",
-    label: "最近检测",
-    value: lastVerifiedDisplay.value,
-  });
-
   return meta;
 });
 
-const usedAfterSalesDisplay = computed(() => {
-  if (afterSalesDays.value === null) {
-    return "暂无记录";
+const usedInfoItems = computed<UsedInfoItem[]>(() => {
+  if (statusKey.value !== "used") {
+    return [];
   }
-  return `${afterSalesDays.value} 天`;
+  return [...usedPrimaryInfo.value, ...usedMetaInfo.value];
 });
 
 const formatTimestamp = (value: number | null | undefined) => {
