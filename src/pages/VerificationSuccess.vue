@@ -21,7 +21,34 @@
       </Card>
 
       <Card class="border border-border/80 bg-card shadow-sm">
-        <CardHeader class="space-y-2">
+        <CardHeader v-if="statusKey === 'used'" class="space-y-4">
+          <div class="flex flex-wrap items-start justify-between gap-4">
+            <div class="space-y-1">
+              <CardTitle class="flex items-center gap-2 text-lg font-semibold text-foreground md:text-xl">
+                <ShieldCheck class="h-5 w-5 text-primary" />
+                Team 兑换码兑换详情
+              </CardTitle>
+              <CardDescription class="text-xs text-muted-foreground md:text-sm">
+                核心信息与售后记录一屏查看，方便后续处理。
+              </CardDescription>
+            </div>
+            <div class="flex flex-wrap items-center gap-3 text-[11px] font-medium uppercase tracking-wide text-muted-foreground md:text-xs">
+              <div class="flex items-center gap-2">
+                <span>卡密状态</span>
+                <Badge variant="outline" :class="cardStatusBadgeClass">
+                  {{ statusMeta.label }}
+                </Badge>
+              </div>
+              <div class="flex items-center gap-2">
+                <span>邀请状态</span>
+                <Badge variant="outline" :class="orderStatusBadgeClass">
+                  {{ orderStatusMeta.label }}
+                </Badge>
+              </div>
+            </div>
+          </div>
+        </CardHeader>
+        <CardHeader v-else class="space-y-2">
           <CardTitle class="flex items-center gap-2 text-lg font-semibold text-foreground md:text-xl">
             <ShieldCheck class="h-5 w-5 text-primary" />
             {{ statusMeta.title }}
@@ -36,73 +63,47 @@
 
         <CardContent class="space-y-6 text-xs text-muted-foreground md:text-sm">
           <template v-if="statusKey === 'used'">
-            <div class="space-y-6">
-              <div class="space-y-6 rounded-xl border border-border/60 bg-muted/40 p-6 shadow-sm">
-                <div class="flex flex-wrap items-start justify-between gap-4">
-                  <div class="space-y-1">
-                    <p class="text-sm font-semibold text-foreground md:text-base">Team 兑换码兑换详情</p>
-                    <p class="text-xs text-muted-foreground md:text-sm">核心信息一目了然，便于售后核对。</p>
-                  </div>
-                  <div class="flex flex-wrap items-center gap-3 text-[11px] font-medium uppercase tracking-wide text-muted-foreground md:text-xs">
-                    <div class="flex items-center gap-2">
-                      <span>卡密状态</span>
-                      <span class="inline-flex items-center rounded-full border px-3 py-1 text-[11px] font-medium text-emerald-700 md:text-xs" :class="'border-emerald-200 bg-emerald-100'">
-                        {{ statusMeta.label }}
-                      </span>
-                    </div>
-                    <div class="flex items-center gap-2">
-                      <span>邀请状态</span>
-                      <span
-                        class="inline-flex items-center rounded-full border px-3 py-1 text-[11px] font-medium md:text-xs"
-                        :class="orderStatusMeta.className"
-                      >
-                        {{ orderStatusMeta.label }}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="grid gap-4 pt-2 md:grid-cols-2 xl:grid-cols-3">
-                  <div v-for="item in usedPrimaryInfo" :key="item.key" class="space-y-1">
-                    <p class="text-[11px] font-medium uppercase tracking-wide text-muted-foreground md:text-xs">
-                      {{ item.label }}
-                    </p>
-                    <div class="flex items-center gap-2">
-                      <span
-                        :title="item.value"
-                        :class="[
-                          'flex-1 text-sm font-medium text-foreground md:text-base',
-                          item.monospace ? 'font-mono' : '',
-                          item.truncate ? 'max-w-[220px] truncate md:max-w-[260px]' : '',
-                        ]"
-                      >
-                        {{ item.value }}
-                      </span>
-                      <Button
-                        v-if="item.copyValue"
-                        variant="ghost"
-                        size="icon"
-                        class="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground"
-                        @click="copyText(item.copyValue, item.label)"
-                      >
-                        <Copy class="h-4 w-4" />
-                        <span class="sr-only">复制 {{ item.label }}</span>
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-
-                <div v-if="usedMetaInfo.length" class="grid gap-4 border-t border-border/60 pt-4 md:grid-cols-3">
-                  <div v-for="item in usedMetaInfo" :key="item.key" class="space-y-1">
-                    <p class="text-[11px] font-medium uppercase tracking-wide text-muted-foreground md:text-xs">
-                      {{ item.label }}
-                    </p>
-                    <p class="text-sm font-medium text-foreground md:text-base">{{ item.value }}</p>
+            <div class="space-y-8">
+              <div class="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+                <div v-for="item in usedPrimaryInfo" :key="item.key" class="space-y-2">
+                  <p class="text-[11px] font-medium uppercase tracking-wide text-muted-foreground md:text-xs">
+                    {{ item.label }}
+                  </p>
+                  <div class="flex items-center gap-2">
+                    <span
+                      :title="item.value"
+                      :class="[
+                        'flex-1 truncate text-sm font-medium text-foreground md:text-base',
+                        item.monospace ? 'font-mono' : '',
+                        item.truncate ? 'max-w-[220px] md:max-w-[260px]' : 'max-w-full',
+                      ]"
+                    >
+                      {{ item.displayValue ?? item.value }}
+                    </span>
+                    <Button
+                      v-if="item.copyValue"
+                      variant="ghost"
+                      size="icon"
+                      class="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground"
+                      @click="copyText(item.copyValue, item.label)"
+                    >
+                      <Copy class="h-4 w-4" />
+                      <span class="sr-only">复制 {{ item.label }}</span>
+                    </Button>
                   </div>
                 </div>
               </div>
 
-              <div class="grid gap-4 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+              <div v-if="usedMetaInfo.length" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <div v-for="item in usedMetaInfo" :key="item.key" class="space-y-1">
+                  <p class="text-[11px] font-medium uppercase tracking-wide text-muted-foreground md:text-xs">
+                    {{ item.label }}
+                  </p>
+                  <p class="text-sm font-medium text-foreground md:text-base">{{ item.value }}</p>
+                </div>
+              </div>
+
+              <div class="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1.2fr)]">
                 <div class="space-y-4 rounded-xl border border-border/60 bg-card/80 p-5 shadow-sm">
                   <div class="space-y-1">
                     <p class="text-sm font-semibold text-foreground md:text-base">操作</p>
@@ -326,6 +327,7 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -401,6 +403,7 @@ type UsedInfoItem = {
   key: string;
   label: string;
   value: string;
+  displayValue?: string;
   monospace?: boolean;
   copyValue?: string;
   truncate?: boolean;
@@ -540,11 +543,26 @@ const orderStatusMeta = computed(() => {
   return ORDER_STATUS_META[key] ?? ORDER_STATUS_META.default;
 });
 
+const CARD_STATUS_BADGE_CLASS: Record<StatusKey, string> = {
+  unused: "border-slate-200 bg-slate-100 text-slate-700",
+  used: "border-emerald-200 bg-emerald-100 text-emerald-700",
+  locked: "border-rose-200 bg-rose-100 text-rose-700",
+};
+
+const cardStatusBadgeClass = computed(() => CARD_STATUS_BADGE_CLASS[statusKey.value] ?? CARD_STATUS_BADGE_CLASS.unused);
+const orderStatusBadgeClass = computed(() => orderStatusMeta.value.className);
+
 const cardKey = computed(() => {
   if (storedState.value?.card) return storedState.value.card;
   const queryCard = typeof route.query.card === "string" ? route.query.card.trim() : "";
   return queryCard;
 });
+
+const formatIdentifier = (value: string) => {
+  if (!value) return "";
+  if (value.length <= 12) return value;
+  return `${value.slice(0, 6)}…${value.slice(-4)}`;
+};
 const usedPrimaryInfo = computed<UsedInfoItem[]>(() => {
   if (statusKey.value !== "used") {
     return [];
@@ -570,9 +588,9 @@ const usedPrimaryInfo = computed<UsedInfoItem[]>(() => {
       key: "team",
       label: "TEAM ID",
       value: teamId || "—",
+      displayValue: teamId ? formatIdentifier(teamId) : "—",
       monospace: true,
       copyValue: teamId || "",
-      truncate: true,
     },
     {
       key: "email",
