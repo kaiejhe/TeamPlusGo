@@ -38,27 +38,12 @@
           <template v-if="statusKey === 'used'">
             <div class="space-y-6">
               <div class="space-y-6 rounded-xl border border-border/60 bg-muted/40 p-6 shadow-sm">
-                <div class="flex flex-wrap items-start justify-between gap-4">
-                  <div class="space-y-1">
-                    <p class="text-sm font-semibold text-foreground md:text-base">Team 兑换码详情</p>
-                    <p class="text-xs text-muted-foreground md:text-sm">查看兑换信息、邀请状态与售后进度。</p>
-                  </div>
-                  <div class="flex flex-wrap items-center gap-2">
-                    <span
-                      class="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-[11px] font-medium text-emerald-700"
-                    >
-                      {{ statusMeta.label }}
-                    </span>
-                    <span
-                      class="inline-flex items-center rounded-full border px-3 py-1 text-[11px] font-medium"
-                      :class="orderStatusMeta.className"
-                    >
-                      {{ orderStatusMeta.label }}
-                    </span>
-                  </div>
+                <div class="space-y-1">
+                  <p class="text-sm font-semibold text-foreground md:text-base">Team 兑换码兑换详情</p>
+                  <p class="text-xs text-muted-foreground md:text-sm">核心信息一目了然，便于售后核对。</p>
                 </div>
 
-                <div class="grid gap-4 pt-2 sm:grid-cols-2">
+                <div class="grid gap-4 pt-2 sm:grid-cols-3">
                   <div v-for="item in usedPrimaryInfo" :key="item.key" class="space-y-1">
                     <p class="text-[11px] font-medium uppercase tracking-wide text-muted-foreground md:text-xs">
                       {{ item.label }}
@@ -75,78 +60,22 @@
                   </div>
                 </div>
 
-                <div v-if="usedMetaInfo.length" class="grid gap-4 border-t border-border/60 pt-4 sm:grid-cols-2 lg:grid-cols-4">
+                <div v-if="usedMetaInfo.length" class="grid gap-4 border-t border-border/60 pt-4 sm:grid-cols-2 lg:grid-cols-3">
                   <div v-for="item in usedMetaInfo" :key="item.key" class="space-y-1">
                     <p class="text-[11px] font-medium uppercase tracking-wide text-muted-foreground md:text-xs">
                       {{ item.label }}
                     </p>
-                    <p class="text-sm font-medium text-foreground md:text-base">{{ item.value }}</p>
+                    <template v-if="item.badge">
+                      <span
+                        class="inline-flex items-center rounded-full border px-3 py-1 text-[11px] font-medium"
+                        :class="item.badgeClass"
+                      >
+                        {{ item.value }}
+                      </span>
+                    </template>
+                    <p v-else class="text-sm font-medium text-foreground md:text-base">{{ item.value }}</p>
                   </div>
                 </div>
-              </div>
-
-              <div class="space-y-4 rounded-xl border border-border/60 bg-card p-6 shadow-sm">
-                <div class="flex flex-wrap items-center justify-between gap-3">
-                  <div class="space-y-1">
-                    <h3 class="text-sm font-semibold text-foreground md:text-base">操作</h3>
-                    <p class="text-xs text-muted-foreground md:text-sm">发送邀请或处理团队成员配置。</p>
-                  </div>
-                </div>
-                <div class="flex flex-wrap gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    class="flex-1 min-w-[160px] border-emerald-500 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800 disabled:opacity-60"
-                    @click="sendInvite()"
-                    :disabled="!orderInfo || sendingInvite"
-                  >
-                    发送邀请
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    class="flex-1 min-w-[160px] border-sky-500 text-sky-700 hover:bg-sky-50 hover:text-sky-800"
-                    @click="switchTeam"
-                    :disabled="!orderInfo"
-                  >
-                    一键换团
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    class="flex-1 min-w-[160px] border-indigo-500 text-indigo-700 hover:bg-indigo-50 hover:text-indigo-800"
-                    @click="optimizeMembers"
-                    :disabled="!orderInfo"
-                  >
-                    成员优化
-                  </Button>
-                </div>
-              </div>
-
-              <div class="space-y-4 rounded-xl border border-border/60 bg-muted/30 p-6 shadow-sm">
-                <div class="space-y-1">
-                  <h3 class="text-sm font-semibold text-foreground md:text-base">UI 拓展功能</h3>
-                  <p class="text-xs text-muted-foreground md:text-sm">Plus 成员 / Plus 代码 / Grok 代码</p>
-                </div>
-                <div class="flex flex-wrap gap-2">
-                  <button
-                    v-for="feature in featurePresets"
-                    :key="feature.id"
-                    type="button"
-                    class="inline-flex items-center rounded-full border px-4 py-2 text-xs font-medium transition md:text-sm"
-                    :class="[
-                      feature.id === activeFeature
-                        ? 'border-primary/70 bg-primary/10 text-primary'
-                        : 'border-border text-muted-foreground hover:border-foreground/40 hover:text-foreground',
-                    ]"
-                    @click="activeFeature = feature.id"
-                  >
-                    {{ feature.label }}
-                  </button>
-                </div>
-                <p class="leading-relaxed text-xs text-muted-foreground md:text-sm">
-                  {{ activeFeatureSummary }}
-                </p>
               </div>
             </div>
           </template>
@@ -394,12 +323,8 @@ type UsedInfoItem = {
   label: string;
   value: string;
   monospace?: boolean;
-};
-
-type FeaturePreset = {
-  id: string;
-  label: string;
-  summary: string;
+  badge?: boolean;
+  badgeClass?: string;
 };
 
 const STATUS_META: Record<
@@ -501,16 +426,6 @@ const headerMeta = computed(() => {
     description: "查看卡密状态与后续操作指引。",
   };
 });
-const teamTypeLabel = computed(() => {
-  const normalized = teamType.value.toLowerCase();
-  if (normalized === "team") {
-    return "Team 团队自动邀请";
-  }
-  if (normalized === "plus") {
-    return "Plus 成品号";
-  }
-  return "自定义卡密";
-});
 const afterSalesDays = computed(() => orderInfo.value?.AfterSales ?? cardInfo.value?.AfterSales ?? null);
 const lastVerifiedDisplay = computed(() => formatTimestamp(lastVerified.value));
 const ORDER_STATUS_META: Record<
@@ -564,16 +479,17 @@ const usedPrimaryInfo = computed<UsedInfoItem[]>(() => {
     cardKey.value ??
     "";
 
-  const items: UsedInfoItem[] = [
-    {
-      key: "type",
-      label: "兑换类型",
-      value: teamTypeLabel.value,
-    },
+  return [
     {
       key: "card",
       label: "兑换卡密",
       value: cardKey.value || "—",
+      monospace: true,
+    },
+    {
+      key: "team",
+      label: "TEAM ID",
+      value: teamId || "—",
       monospace: true,
     },
     {
@@ -582,15 +498,7 @@ const usedPrimaryInfo = computed<UsedInfoItem[]>(() => {
       value: email || "—",
       monospace: true,
     },
-    {
-      key: "team",
-      label: "Team ID",
-      value: teamId || "—",
-      monospace: true,
-    },
   ];
-
-  return items;
 });
 const usedMetaInfo = computed<UsedInfoItem[]>(() => {
   if (statusKey.value !== "used") {
@@ -599,66 +507,36 @@ const usedMetaInfo = computed<UsedInfoItem[]>(() => {
 
   const meta: UsedInfoItem[] = [];
 
-  if (afterSalesDays.value !== null) {
-    meta.push({
-      key: "after-sales",
-      label: "售后时长",
-      value: `${afterSalesDays.value} 天`,
-    });
-  }
-
   meta.push({
-    key: "last-verified",
-    label: "最近检测",
-    value: lastVerifiedDisplay.value,
+    key: "card-status",
+    label: "卡密状态",
+    value: statusMeta.value.label,
+    badge: true,
+    badgeClass: "border-emerald-200 bg-emerald-100 text-emerald-700",
   });
 
-  const createdAt = cardInfo.value?.AddTime ?? orderInfo.value?.AddTime ?? null;
-  const updatedAt = cardInfo.value?.UpdTime ?? orderInfo.value?.UpdTime ?? null;
+  meta.push({
+    key: "invite-status",
+    label: "邀请状态",
+    value: orderStatusMeta.value.label,
+    badge: true,
+    badgeClass: orderStatusMeta.value.className,
+  });
 
-  if (createdAt) {
-    meta.push({
-      key: "created-at",
-      label: "发卡时间",
-      value: formatTimestamp(createdAt),
-    });
-  }
+  meta.push({
+    key: "after-sales",
+    label: "售后时长",
+    value: afterSalesDays.value !== null ? `${afterSalesDays.value} 天` : "—",
+  });
 
-  if (updatedAt) {
-    meta.push({
-      key: "updated-at",
-      label: "最近更新",
-      value: formatTimestamp(updatedAt),
-    });
-  }
+  const createdAt = orderInfo.value?.AddTime ?? null;
+  meta.push({
+    key: "created-at",
+    label: "创建时间",
+    value: formatTimestamp(createdAt),
+  });
 
   return meta;
-});
-const featurePresets: FeaturePreset[] = [
-  {
-    id: "plus-members",
-    label: "Plus 成员",
-    summary: "查看已加入团队的 Plus 成员与他们的邀请记录，便于快速核对名额。",
-  },
-  {
-    id: "plus-code",
-    label: "Plus 代码",
-    summary: "获取自动化处理 Plus 邀请的脚本配置，提升批量邀请效率。",
-  },
-  {
-    id: "grok-code",
-    label: "Grok 代码",
-    summary: "查看 Grok 团队的授权与通知模板，保持信息同步。",
-  },
-];
-const activeFeature = ref<string>(featurePresets[0]?.id ?? "");
-const activeFeatureSummary = computed(() => {
-  if (!activeFeature.value) {
-    return "选择需要的功能模块以查看对应的操作说明。";
-  }
-
-  const current = featurePresets.find((item) => item.id === activeFeature.value);
-  return current?.summary ?? "选择需要的功能模块以查看对应的操作说明。";
 });
 
 const formatTimestamp = (value: number | null | undefined) => {
@@ -1112,22 +990,6 @@ function toPositiveInt(value: unknown): number | null {
   const intValue = Math.trunc(numeric);
   return intValue > 0 ? intValue : null;
 }
-
-const switchTeam = () => {
-  if (!orderInfo.value) {
-    toast.error("当前卡密未绑定订单");
-    return;
-  }
-  toast.info("当前功能暂未接入");
-};
-
-const optimizeMembers = () => {
-  if (!orderInfo.value) {
-    toast.error("当前卡密未绑定订单");
-    return;
-  }
-  toast.info("当前功能暂未接入");
-};
 
 const refreshCardState = async () => {
   if (!cardKey.value) return;
