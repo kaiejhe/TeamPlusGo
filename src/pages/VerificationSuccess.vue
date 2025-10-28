@@ -39,27 +39,8 @@
                 核心字段一目了然，便于后续跟进与售后处理。
               </CardDescription>
             </div>
-            <div class="flex flex-wrap items-center gap-3 text-[11px] text-muted-foreground md:text-xs">
-              <div class="flex items-center gap-2">
-                <span class="font-medium uppercase tracking-wide">卡密状态</span>
-                <Badge
-                  variant="outline"
-                  :class="cardStatusBadgeClass"
-                  class="px-3 py-1 text-[11px] font-semibold md:text-xs"
-                >
-                  {{ statusMeta.label }}
-                </Badge>
-              </div>
-              <div class="flex items-center gap-2">
-                <span class="font-medium uppercase tracking-wide">邀请状态</span>
-                <Badge
-                  variant="outline"
-                  :class="orderStatusBadgeClass"
-                  class="px-3 py-1 text-[11px] font-semibold md:text-xs"
-                >
-                  {{ orderStatusMeta.label }}
-                </Badge>
-              </div>
+            <div class="flex flex-wrap items-center gap-2 text-sm text-muted-foreground md:text-base">
+              <span class="font-semibold text-foreground">{{ statusMeta.label }}</span>
             </div>
           </div>
         </CardHeader>
@@ -592,13 +573,6 @@ const orderStatusMeta = computed(() => {
   return ORDER_STATUS_META[key] ?? ORDER_STATUS_META.default;
 });
 
-const CARD_STATUS_BADGE_CLASS: Record<StatusKey, string> = {
-  unused: "border-slate-200 bg-slate-100 text-slate-700",
-  used: "border-emerald-200 bg-emerald-100 text-emerald-700",
-  locked: "border-rose-200 bg-rose-100 text-rose-700",
-};
-
-const cardStatusBadgeClass = computed(() => CARD_STATUS_BADGE_CLASS[statusKey.value] ?? CARD_STATUS_BADGE_CLASS.unused);
 const orderStatusBadgeClass = computed(() => orderStatusMeta.value.className);
 
 const cardKey = computed(() => {
