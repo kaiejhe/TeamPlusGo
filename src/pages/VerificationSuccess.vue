@@ -34,193 +34,281 @@
           </CardDescription>
         </CardHeader>
 
-        <CardContent class="space-y-5 text-xs text-muted-foreground md:text-sm">
-          <div class="grid gap-3 rounded-xl border border-border/60 bg-muted/50 p-4 text-xs md:text-sm">
-            <div class="flex items-center justify-between gap-2">
-              <span class="text-muted-foreground">卡密状态</span>
-              <span class="font-medium text-foreground">{{ statusMeta.label }}</span>
-            </div>
-            <div class="flex items-center justify-between gap-2" v-if="afterSalesDays !== null">
-              <span class="text-muted-foreground">售后时长</span>
-              <span class="font-medium text-foreground">{{ afterSalesDays }} 天</span>
-            </div>
-            <div class="flex items-center justify-between gap-2" v-if="cardInfo?.AddTime">
-              <span class="text-muted-foreground">创建时间</span>
-              <span class="font-medium text-foreground">{{ formatTimestamp(cardInfo.AddTime) }}</span>
-            </div>
-            <div class="flex items-center justify-between gap-2" v-if="orderInfo">
-              <span class="text-muted-foreground">邀请状态</span>
-              <span
-                class="inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-medium"
-                :class="orderStatusMeta.className"
-              >
-                {{ orderStatusMeta.label }}
-              </span>
-            </div>
-          </div>
-          <div class="grid gap-4 rounded-xl border border-border/40 bg-muted/30 px-4 py-3 shadow-sm">
-            <div class="flex flex-wrap items-center justify-between gap-3">
-              <div class="space-y-1 text-xs md:text-sm">
-                <p class="text-xs font-medium uppercase tracking-wide text-muted-foreground">Team 兑换码</p>
-                <p class="font-mono text-sm font-medium text-foreground md:text-base">{{ cardKey }}</p>
-              </div>
-              <div class="text-right">
-                <p class="text-xs font-medium uppercase tracking-wide text-muted-foreground">最近检测</p>
-                <p class="text-xs font-medium text-muted-foreground md:text-sm">{{ lastVerifiedDisplay }}</p>
-              </div>
-            </div>
+        <CardContent class="space-y-6 text-xs text-muted-foreground md:text-sm">
+          <template v-if="statusKey === 'used'">
+            <div class="space-y-6">
+              <div class="space-y-6 rounded-xl border border-border/60 bg-muted/40 p-6 shadow-sm">
+                <div class="flex flex-wrap items-start justify-between gap-4">
+                  <div class="space-y-1">
+                    <p class="text-sm font-semibold text-foreground md:text-base">Team 兑换码详情</p>
+                    <p class="text-xs text-muted-foreground md:text-sm">查看兑换信息、邀请状态与售后进度。</p>
+                  </div>
+                  <div class="flex flex-wrap items-center gap-2">
+                    <span
+                      class="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-[11px] font-medium text-emerald-700"
+                    >
+                      {{ statusMeta.label }}
+                    </span>
+                    <span
+                      class="inline-flex items-center rounded-full border px-3 py-1 text-[11px] font-medium"
+                      :class="orderStatusMeta.className"
+                    >
+                      {{ orderStatusMeta.label }}
+                    </span>
+                  </div>
+                </div>
 
-            <div class="grid gap-3 text-xs md:text-sm sm:grid-cols-2">
-              <div class="space-y-1">
-                <p class="text-xs font-medium uppercase tracking-wide text-muted-foreground">绑定邮箱</p>
-                <p class="font-mono text-xs text-foreground md:text-sm">
-                  {{ orderInfo?.Order_us_Email ?? storedState?.email ?? '—' }}
-                </p>
-              </div>
-              <div class="space-y-1">
-                <p class="text-xs font-medium uppercase tracking-wide text-muted-foreground">Team ID</p>
-                <p class="font-mono text-[11px] text-foreground md:text-[13px]">
-                  {{ orderInfo?.OrderTeamID ?? orderInfo?.TeamCard ?? cardKey }}
-                </p>
-              </div>
-            </div>
-          </div>
+                <div class="grid gap-4 pt-2 sm:grid-cols-2">
+                  <div v-for="item in usedPrimaryInfo" :key="item.key" class="space-y-1">
+                    <p class="text-[11px] font-medium uppercase tracking-wide text-muted-foreground md:text-xs">
+                      {{ item.label }}
+                    </p>
+                    <p
+                      :class="[
+                        item.monospace
+                          ? 'font-mono text-sm font-medium text-foreground md:text-base'
+                          : 'text-sm font-medium text-foreground md:text-base',
+                      ]"
+                    >
+                      {{ item.value }}
+                    </p>
+                  </div>
+                </div>
 
-          <section v-if="statusKey === 'unused'" class="space-y-4">
-            <Alert variant="default" class="border border-border/60 bg-muted/40">
-              <AlertDescription class="space-y-2 text-xs text-muted-foreground md:text-sm">
-                <p class="leading-relaxed">
-                  绑定邮箱前，请先确认 GPT 注册邮箱，确保填写的信息准确无误。
-                </p>
-                <details class="group space-y-1 text-[11px] leading-relaxed text-muted-foreground md:text-xs">
-                  <summary
-                    class="cursor-pointer text-xs font-medium text-primary transition hover:underline group-open:text-primary/80 md:text-sm"
-                  >
-                    如何确认 GPT 注册邮箱？
-                  </summary>
-                  <ol class="list-decimal space-y-1 pl-4">
-                    <li>
-                      登录
-                      <a
-                        href="https://chatgpt.com"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="text-primary hover:underline"
-                      >
-                        chatgpt.com
-                      </a>
-                      并保持会话。
-                    </li>
-                    <li>
-                      在同一浏览器打开
-                      <a
-                        href="https://chatgpt.com/api/auth/session"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="text-primary hover:underline"
-                      >
-                        /api/auth/session
-                      </a>
-                      页面。
-                    </li>
-                    <li>
-                      页面返回的 JSON 数据中
-                      <span class="font-mono text-muted-foreground">user.email</span>
-                      字段即为当前绑定的邮箱。
-                    </li>
-                  </ol>
-                </details>
-              </AlertDescription>
-            </Alert>
-
-            <form class="space-y-4" @submit.prevent="handleEmailSubmit">
-              <div class="space-y-2">
-                <label class="text-xs font-medium uppercase tracking-wide text-muted-foreground" for="team-email">
-                  接收邀请邮箱
-                </label>
-                <Input
-                  id="team-email"
-                  v-model.trim="teamEmail"
-                  type="email"
-                  placeholder="例如：yourname@example.com"
-                  :disabled="submitting"
-                  class="h-11"
-                />
-              </div>
-
-              <div class="space-y-2">
-                <Alert v-if="emailError" variant="destructive">
-                  <AlertTitle>提交遇到问题</AlertTitle>
-                  <AlertDescription>{{ emailError }}</AlertDescription>
-                </Alert>
-                <div
-                  v-if="emailSuccess && !emailError"
-                  class="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-xs text-emerald-700 md:text-sm"
-                >
-                  {{ emailSuccess }}
+                <div v-if="usedMetaInfo.length" class="grid gap-4 border-t border-border/60 pt-4 sm:grid-cols-2 lg:grid-cols-4">
+                  <div v-for="item in usedMetaInfo" :key="item.key" class="space-y-1">
+                    <p class="text-[11px] font-medium uppercase tracking-wide text-muted-foreground md:text-xs">
+                      {{ item.label }}
+                    </p>
+                    <p class="text-sm font-medium text-foreground md:text-base">{{ item.value }}</p>
+                  </div>
                 </div>
               </div>
 
-              <Button type="submit" size="lg" class="w-full justify-center gap-2 text-sm md:text-base" :disabled="submitting">
-                <svg
-                  v-if="submitting"
-                  class="h-5 w-5 animate-spin"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  aria-hidden="true"
-                >
-                  <path d="M21 12a9 9 0 1 1-6.219-8.56" />
-                </svg>
-                {{ submitted ? "已提交" : submitting ? "提交中..." : "提交邮箱" }}
-              </Button>
-            </form>
-          </section>
-
-          <section v-else class="space-y-3 text-xs text-muted-foreground md:text-sm">
-            <Alert :variant="statusKey === 'locked' ? 'destructive' : 'default'">
-              <AlertTitle class="text-sm font-semibold text-foreground md:text-base">{{ statusMeta.label }}</AlertTitle>
-              <AlertDescription class="text-xs text-muted-foreground md:text-sm">
-                {{
-                  statusKey === "locked"
-                    ? "当前卡密已锁定，如需继续处理请联系管理员或客服。"
-                    : "如需通知成员或处理售后，请使用下方快捷操作。"
-                }}
-              </AlertDescription>
-            </Alert>
-
-            <template v-if="statusKey === 'used'">
-              <div class="flex flex-wrap gap-2">
-                <Button
-                  variant="outline"
-                  class="flex-1 min-w-[140px] border-emerald-500 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800 disabled:opacity-60"
-                  @click="sendInvite()"
-                  :disabled="!orderInfo || sendingInvite"
-                >
-                  发送邀请
-                </Button>
-                <Button
-                  variant="outline"
-                  class="flex-1 min-w-[140px] border-sky-500 text-sky-700 hover:bg-sky-50 hover:text-sky-800"
-                  @click="switchTeam"
-                  :disabled="!orderInfo"
-                >
-                  一键换团
-                </Button>
-                <Button
-                  variant="outline"
-                  class="flex-1 min-w-[140px] border-indigo-500 text-indigo-700 hover:bg-indigo-50 hover:text-indigo-800"
-                  @click="optimizeMembers"
-                  :disabled="!orderInfo"
-                >
-                  成员优化
-                </Button>
+              <div class="space-y-4 rounded-xl border border-border/60 bg-card p-6 shadow-sm">
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                  <div class="space-y-1">
+                    <h3 class="text-sm font-semibold text-foreground md:text-base">操作</h3>
+                    <p class="text-xs text-muted-foreground md:text-sm">发送邀请或处理团队成员配置。</p>
+                  </div>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    class="flex-1 min-w-[160px] border-emerald-500 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800 disabled:opacity-60"
+                    @click="sendInvite()"
+                    :disabled="!orderInfo || sendingInvite"
+                  >
+                    发送邀请
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    class="flex-1 min-w-[160px] border-sky-500 text-sky-700 hover:bg-sky-50 hover:text-sky-800"
+                    @click="switchTeam"
+                    :disabled="!orderInfo"
+                  >
+                    一键换团
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    class="flex-1 min-w-[160px] border-indigo-500 text-indigo-700 hover:bg-indigo-50 hover:text-indigo-800"
+                    @click="optimizeMembers"
+                    :disabled="!orderInfo"
+                  >
+                    成员优化
+                  </Button>
+                </div>
               </div>
-            </template>
-          </section>
+
+              <div class="space-y-4 rounded-xl border border-border/60 bg-muted/30 p-6 shadow-sm">
+                <div class="space-y-1">
+                  <h3 class="text-sm font-semibold text-foreground md:text-base">UI 拓展功能</h3>
+                  <p class="text-xs text-muted-foreground md:text-sm">Plus 成员 / Plus 代码 / Grok 代码</p>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                  <button
+                    v-for="feature in featurePresets"
+                    :key="feature.id"
+                    type="button"
+                    class="inline-flex items-center rounded-full border px-4 py-2 text-xs font-medium transition md:text-sm"
+                    :class="[
+                      feature.id === activeFeature
+                        ? 'border-primary/70 bg-primary/10 text-primary'
+                        : 'border-border text-muted-foreground hover:border-foreground/40 hover:text-foreground',
+                    ]"
+                    @click="activeFeature = feature.id"
+                  >
+                    {{ feature.label }}
+                  </button>
+                </div>
+                <p class="leading-relaxed text-xs text-muted-foreground md:text-sm">
+                  {{ activeFeatureSummary }}
+                </p>
+              </div>
+            </div>
+          </template>
+          <template v-else>
+            <div class="grid gap-3 rounded-xl border border-border/60 bg-muted/50 p-4 text-xs md:text-sm">
+              <div class="flex items-center justify-between gap-2">
+                <span class="text-muted-foreground">卡密状态</span>
+                <span class="font-medium text-foreground">{{ statusMeta.label }}</span>
+              </div>
+              <div class="flex items-center justify-between gap-2" v-if="afterSalesDays !== null">
+                <span class="text-muted-foreground">售后时长</span>
+                <span class="font-medium text-foreground">{{ afterSalesDays }} 天</span>
+              </div>
+              <div class="flex items-center justify-between gap-2" v-if="cardInfo?.AddTime">
+                <span class="text-muted-foreground">创建时间</span>
+                <span class="font-medium text-foreground">{{ formatTimestamp(cardInfo.AddTime) }}</span>
+              </div>
+              <div class="flex items-center justify-between gap-2" v-if="orderInfo">
+                <span class="text-muted-foreground">邀请状态</span>
+                <span
+                  class="inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-medium"
+                  :class="orderStatusMeta.className"
+                >
+                  {{ orderStatusMeta.label }}
+                </span>
+              </div>
+            </div>
+            <div class="grid gap-4 rounded-xl border border-border/40 bg-muted/30 px-4 py-3 shadow-sm">
+              <div class="flex flex-wrap items-center justify-between gap-3">
+                <div class="space-y-1 text-xs md:text-sm">
+                  <p class="text-xs font-medium uppercase tracking-wide text-muted-foreground">Team 兑换码</p>
+                  <p class="font-mono text-sm font-medium text-foreground md:text-base">{{ cardKey }}</p>
+                </div>
+                <div class="text-right">
+                  <p class="text-xs font-medium uppercase tracking-wide text-muted-foreground">最近检测</p>
+                  <p class="text-xs font-medium text-muted-foreground md:text-sm">{{ lastVerifiedDisplay }}</p>
+                </div>
+              </div>
+
+              <div class="grid gap-3 text-xs md:text-sm sm:grid-cols-2">
+                <div class="space-y-1">
+                  <p class="text-xs font-medium uppercase tracking-wide text-muted-foreground">绑定邮箱</p>
+                  <p class="font-mono text-xs text-foreground md:text-sm">
+                    {{ orderInfo?.Order_us_Email ?? storedState?.email ?? '—' }}
+                  </p>
+                </div>
+                <div class="space-y-1">
+                  <p class="text-xs font-medium uppercase tracking-wide text-muted-foreground">Team ID</p>
+                  <p class="font-mono text-[11px] text-foreground md:text-[13px]">
+                    {{ orderInfo?.OrderTeamID ?? orderInfo?.TeamCard ?? cardKey }}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <section v-if="statusKey === 'unused'" class="space-y-4">
+              <Alert variant="default" class="border border-border/60 bg-muted/40">
+                <AlertDescription class="space-y-2 text-xs text-muted-foreground md:text-sm">
+                  <p class="leading-relaxed">
+                    绑定邮箱前，请先确认 GPT 注册邮箱，确保填写的信息准确无误。
+                  </p>
+                  <details class="group space-y-1 text-[11px] leading-relaxed text-muted-foreground md:text-xs">
+                    <summary
+                      class="cursor-pointer text-xs font-medium text-primary transition hover:underline group-open:text-primary/80 md:text-sm"
+                    >
+                      如何确认 GPT 注册邮箱？
+                    </summary>
+                    <ol class="list-decimal space-y-1 pl-4">
+                      <li>
+                        登录
+                        <a
+                          href="https://chatgpt.com"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          class="text-primary hover:underline"
+                        >
+                          chatgpt.com
+                        </a>
+                        并保持会话。
+                      </li>
+                      <li>
+                        在同一浏览器打开
+                        <a
+                          href="https://chatgpt.com/api/auth/session"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          class="text-primary hover:underline"
+                        >
+                          /api/auth/session
+                        </a>
+                        页面。
+                      </li>
+                      <li>
+                        页面返回的 JSON 数据中
+                        <span class="font-mono text-muted-foreground">user.email</span>
+                        字段即为当前绑定的邮箱。
+                      </li>
+                    </ol>
+                  </details>
+                </AlertDescription>
+              </Alert>
+
+              <form class="space-y-4" @submit.prevent="handleEmailSubmit">
+                <div class="space-y-2">
+                  <label class="text-xs font-medium uppercase tracking-wide text-muted-foreground" for="team-email">
+                    接收邀请邮箱
+                  </label>
+                  <Input
+                    id="team-email"
+                    v-model.trim="teamEmail"
+                    type="email"
+                    placeholder="例如：yourname@example.com"
+                    :disabled="submitting"
+                    class="h-11"
+                  />
+                </div>
+
+                <div class="space-y-2">
+                  <Alert v-if="emailError" variant="destructive">
+                    <AlertTitle>提交遇到问题</AlertTitle>
+                    <AlertDescription>{{ emailError }}</AlertDescription>
+                  </Alert>
+                  <div
+                    v-if="emailSuccess && !emailError"
+                    class="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-xs text-emerald-700 md:text-sm"
+                  >
+                    {{ emailSuccess }}
+                  </div>
+                </div>
+
+                <Button type="submit" size="lg" class="w-full justify-center gap-2 text-sm md:text-base" :disabled="submitting">
+                  <svg
+                    v-if="submitting"
+                    class="h-5 w-5 animate-spin"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+                  </svg>
+                  {{ submitted ? "已提交" : submitting ? "提交中..." : "提交邮箱" }}
+                </Button>
+              </form>
+            </section>
+
+            <section v-else class="space-y-3 text-xs text-muted-foreground md:text-sm">
+              <Alert :variant="statusKey === 'locked' ? 'destructive' : 'default'">
+                <AlertTitle class="text-sm font-semibold text-foreground md:text-base">{{ statusMeta.label }}</AlertTitle>
+                <AlertDescription class="text-xs text-muted-foreground md:text-sm">
+                  {{
+                    statusKey === "locked"
+                      ? "当前卡密已锁定，如需继续处理请联系管理员或客服。"
+                      : "如需通知成员或处理售后，请使用下方快捷操作。"
+                  }}
+                </AlertDescription>
+              </Alert>
+            </section>
+          </template>
         </CardContent>
       </Card>
     </div>
@@ -300,6 +388,19 @@ type ConfirmationRequest = {
 };
 
 type StatusKey = "unused" | "used" | "locked";
+
+type UsedInfoItem = {
+  key: string;
+  label: string;
+  value: string;
+  monospace?: boolean;
+};
+
+type FeaturePreset = {
+  id: string;
+  label: string;
+  summary: string;
+};
 
 const STATUS_META: Record<
   StatusKey,
@@ -400,6 +501,16 @@ const headerMeta = computed(() => {
     description: "查看卡密状态与后续操作指引。",
   };
 });
+const teamTypeLabel = computed(() => {
+  const normalized = teamType.value.toLowerCase();
+  if (normalized === "team") {
+    return "Team 团队自动邀请";
+  }
+  if (normalized === "plus") {
+    return "Plus 成品号";
+  }
+  return "自定义卡密";
+});
 const afterSalesDays = computed(() => orderInfo.value?.AfterSales ?? cardInfo.value?.AfterSales ?? null);
 const lastVerifiedDisplay = computed(() => formatTimestamp(lastVerified.value));
 const ORDER_STATUS_META: Record<
@@ -411,19 +522,19 @@ const ORDER_STATUS_META: Record<
 > = {
   o1: {
     label: "待发送邀请链接",
-    className: "bg-amber-100 text-amber-700",
+    className: "border-amber-200 bg-amber-100 text-amber-700",
   },
   o2: {
     label: "已发送邀请链接",
-    className: "bg-emerald-100 text-emerald-700",
+    className: "border-emerald-200 bg-emerald-100 text-emerald-700",
   },
   o3: {
     label: "发送邀请失败",
-    className: "bg-rose-100 text-rose-700",
+    className: "border-rose-200 bg-rose-100 text-rose-700",
   },
   default: {
     label: "状态未知",
-    className: "bg-slate-200 text-slate-700",
+    className: "border-slate-200 bg-slate-100 text-slate-700",
   },
 };
 
@@ -439,6 +550,115 @@ const cardKey = computed(() => {
   if (storedState.value?.card) return storedState.value.card;
   const queryCard = typeof route.query.card === "string" ? route.query.card.trim() : "";
   return queryCard;
+});
+const usedPrimaryInfo = computed<UsedInfoItem[]>(() => {
+  if (statusKey.value !== "used") {
+    return [];
+  }
+
+  const email = orderInfo.value?.Order_us_Email ?? storedState.value?.email ?? "";
+  const teamId =
+    orderInfo.value?.OrderTeamID ??
+    orderInfo.value?.TeamCard ??
+    cardInfo.value?.TeamCard ??
+    cardKey.value ??
+    "";
+
+  const items: UsedInfoItem[] = [
+    {
+      key: "type",
+      label: "兑换类型",
+      value: teamTypeLabel.value,
+    },
+    {
+      key: "card",
+      label: "兑换卡密",
+      value: cardKey.value || "—",
+      monospace: true,
+    },
+    {
+      key: "email",
+      label: "绑定邮箱",
+      value: email || "—",
+      monospace: true,
+    },
+    {
+      key: "team",
+      label: "Team ID",
+      value: teamId || "—",
+      monospace: true,
+    },
+  ];
+
+  return items;
+});
+const usedMetaInfo = computed<UsedInfoItem[]>(() => {
+  if (statusKey.value !== "used") {
+    return [];
+  }
+
+  const meta: UsedInfoItem[] = [];
+
+  if (afterSalesDays.value !== null) {
+    meta.push({
+      key: "after-sales",
+      label: "售后时长",
+      value: `${afterSalesDays.value} 天`,
+    });
+  }
+
+  meta.push({
+    key: "last-verified",
+    label: "最近检测",
+    value: lastVerifiedDisplay.value,
+  });
+
+  const createdAt = cardInfo.value?.AddTime ?? orderInfo.value?.AddTime ?? null;
+  const updatedAt = cardInfo.value?.UpdTime ?? orderInfo.value?.UpdTime ?? null;
+
+  if (createdAt) {
+    meta.push({
+      key: "created-at",
+      label: "发卡时间",
+      value: formatTimestamp(createdAt),
+    });
+  }
+
+  if (updatedAt) {
+    meta.push({
+      key: "updated-at",
+      label: "最近更新",
+      value: formatTimestamp(updatedAt),
+    });
+  }
+
+  return meta;
+});
+const featurePresets: FeaturePreset[] = [
+  {
+    id: "plus-members",
+    label: "Plus 成员",
+    summary: "查看已加入团队的 Plus 成员与他们的邀请记录，便于快速核对名额。",
+  },
+  {
+    id: "plus-code",
+    label: "Plus 代码",
+    summary: "获取自动化处理 Plus 邀请的脚本配置，提升批量邀请效率。",
+  },
+  {
+    id: "grok-code",
+    label: "Grok 代码",
+    summary: "查看 Grok 团队的授权与通知模板，保持信息同步。",
+  },
+];
+const activeFeature = ref<string>(featurePresets[0]?.id ?? "");
+const activeFeatureSummary = computed(() => {
+  if (!activeFeature.value) {
+    return "选择需要的功能模块以查看对应的操作说明。";
+  }
+
+  const current = featurePresets.find((item) => item.id === activeFeature.value);
+  return current?.summary ?? "选择需要的功能模块以查看对应的操作说明。";
 });
 
 const formatTimestamp = (value: number | null | undefined) => {
