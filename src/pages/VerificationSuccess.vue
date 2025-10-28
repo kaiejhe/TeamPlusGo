@@ -47,13 +47,24 @@
               </div>
             </div>
           </div>
-          <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <div v-for="item in usedInfoItems" :key="item.key" class="space-y-2">
-              <p class="text-[11px] font-medium uppercase tracking-wide text-muted-foreground md:text-xs">
+          <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            <div v-for="item in usedInfoItems" :key="item.key" class="space-y-1.5">
+              <p class="text-[11px] font-medium text-muted-foreground md:text-xs">
                 {{ item.label }}
               </p>
               <div class="flex items-center gap-2">
+                <Badge
+                  v-if="item.badgeClass"
+                  variant="outline"
+                  :class="[
+                    item.badgeClass,
+                    'px-3 py-1 text-[11px] font-semibold md:text-xs',
+                  ]"
+                >
+                  {{ item.displayValue ?? item.value }}
+                </Badge>
                 <span
+                  v-else
                   :title="item.value"
                   :class="[
                     'flex-1 truncate text-sm font-medium text-foreground md:text-base',
@@ -100,24 +111,24 @@
                 </div>
                 <div class="flex flex-wrap gap-2">
                   <Button
-                    variant="outline"
-                    class="flex-1 min-w-[140px] border-emerald-500 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800"
+                    variant="secondary"
+                    class="flex-1 min-w-[140px] justify-center"
                     @click="sendInvite()"
                     :disabled="!orderInfo || sendingInvite"
                   >
                     发送邀请
                   </Button>
                   <Button
-                    variant="outline"
-                    class="flex-1 min-w-[140px] border-sky-500 text-sky-700 hover:bg-sky-50 hover:text-sky-800"
+                    variant="secondary"
+                    class="flex-1 min-w-[140px] justify-center"
                     @click="switchTeam"
                     :disabled="!orderInfo"
                   >
                     更换团队
                   </Button>
                   <Button
-                    variant="outline"
-                    class="flex-1 min-w-[140px] border-indigo-500 text-indigo-700 hover:bg-indigo-50 hover:text-indigo-800"
+                    variant="secondary"
+                    class="flex-1 min-w-[140px] justify-center"
                     @click="optimizeMembers"
                     :disabled="!orderInfo"
                   >
@@ -396,6 +407,7 @@ type UsedInfoItem = {
   monospace?: boolean;
   copyValue?: string;
   truncate?: boolean;
+  badgeClass?: string;
 };
 
 type UiExtensionFeature = {
@@ -573,38 +585,27 @@ const cardKey = computed(() => {
 
 const formatIdentifier = (value: string) => {
   if (!value) return "";
-  if (value.length <= 12) return value;
+  if (value.length <= 14) return value;
   return `${value.slice(0, 6)}…${value.slice(-4)}`;
 };
-const usedPrimaryInfo = computed<UsedInfoItem[]>(() => {
+
+const usedInfoItems = computed<UsedInfoItem[]>(() => {
   if (statusKey.value !== "used") {
     return [];
   }
 
   const email = orderInfo.value?.Order_us_Email ?? storedState.value?.email ?? "";
-  const teamId =
-    orderInfo.value?.OrderTeamID ??
-    orderInfo.value?.TeamCard ??
-    cardInfo.value?.TeamCard ??
-    cardKey.value ??
-    "";
+  const teamIdentifier = orderInfo.value?.OrderTeamID ?? "";
+  const teamReference = orderInfo.value?.TeamCard ?? cardInfo.value?.TeamCard ?? teamIdentifier;
+  const createdAt = orderInfo.value?.AddTime ?? cardInfo.value?.AddTime ?? null;
 
   return [
     {
       key: "card",
-      label: "兑换卡密",
+      label: "兑换码",
       value: cardKey.value || "—",
       monospace: true,
       copyValue: cardKey.value || "",
-      truncate: true,
-    },
-    {
-      key: "team",
-      label: "TEAM ID",
-      value: teamId || "—",
-      displayValue: teamId ? formatIdentifier(teamId) : "—",
-      monospace: true,
-      copyValue: teamId || "",
       truncate: true,
     },
     {
@@ -614,36 +615,32 @@ const usedPrimaryInfo = computed<UsedInfoItem[]>(() => {
       monospace: true,
       copyValue: email || "",
     },
+    {
+      key: "team-number",
+      label: "团队编号",
+      value: teamReference || teamIdentifier || "—",
+      displayValue: teamReference || teamIdentifier ? formatIdentifier(teamReference || teamIdentifier) : "—",
+      monospace: true,
+      copyValue: teamReference || teamIdentifier || "",
+      truncate: true,
+    },
+    {
+      key: "after-sales",
+      label: "售后时长",
+      value: afterSalesDays.value !== null ? `${afterSalesDays.value} 天` : "—",
+    },
+    {
+      key: "invite-status",
+      label: "邀请状态",
+      value: orderStatusMeta.value.label,
+      badgeClass: orderStatusMeta.value.className,
+    },
+    {
+      key: "created-at",
+      label: "订单创建时间",
+      value: formatTimestamp(createdAt),
+    },
   ];
-});
-const usedMetaInfo = computed<UsedInfoItem[]>(() => {
-  if (statusKey.value !== "used") {
-    return [];
-  }
-
-  const meta: UsedInfoItem[] = [];
-
-  meta.push({
-    key: "after-sales",
-    label: "售后时长",
-    value: afterSalesDays.value !== null ? `${afterSalesDays.value} 天` : "—",
-  });
-
-  const createdAt = orderInfo.value?.AddTime ?? null;
-  meta.push({
-    key: "created-at",
-    label: "创建时间",
-    value: formatTimestamp(createdAt),
-  });
-
-  return meta;
-});
-
-const usedInfoItems = computed<UsedInfoItem[]>(() => {
-  if (statusKey.value !== "used") {
-    return [];
-  }
-  return [...usedPrimaryInfo.value, ...usedMetaInfo.value];
 });
 
 const formatTimestamp = (value: number | null | undefined) => {
