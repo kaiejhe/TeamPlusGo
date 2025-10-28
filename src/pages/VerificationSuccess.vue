@@ -38,43 +38,122 @@
           <template v-if="statusKey === 'used'">
             <div class="space-y-6">
               <div class="space-y-6 rounded-xl border border-border/60 bg-muted/40 p-6 shadow-sm">
-                <div class="space-y-1">
-                  <p class="text-sm font-semibold text-foreground md:text-base">Team 兑换码兑换详情</p>
-                  <p class="text-xs text-muted-foreground md:text-sm">核心信息一目了然，便于售后核对。</p>
+                <div class="flex flex-wrap items-start justify-between gap-4">
+                  <div class="space-y-1">
+                    <p class="text-sm font-semibold text-foreground md:text-base">Team 兑换码兑换详情</p>
+                    <p class="text-xs text-muted-foreground md:text-sm">核心信息一目了然，便于售后核对。</p>
+                  </div>
+                  <div class="flex flex-wrap items-center gap-3 text-[11px] font-medium uppercase tracking-wide text-muted-foreground md:text-xs">
+                    <div class="flex items-center gap-2">
+                      <span>卡密状态</span>
+                      <span class="inline-flex items-center rounded-full border px-3 py-1 text-[11px] font-medium text-emerald-700 md:text-xs" :class="'border-emerald-200 bg-emerald-100'">
+                        {{ statusMeta.label }}
+                      </span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <span>邀请状态</span>
+                      <span
+                        class="inline-flex items-center rounded-full border px-3 py-1 text-[11px] font-medium md:text-xs"
+                        :class="orderStatusMeta.className"
+                      >
+                        {{ orderStatusMeta.label }}
+                      </span>
+                    </div>
+                  </div>
                 </div>
 
-                <div class="grid gap-4 pt-2 sm:grid-cols-3">
+                <div class="grid gap-4 pt-2 md:grid-cols-2 xl:grid-cols-3">
                   <div v-for="item in usedPrimaryInfo" :key="item.key" class="space-y-1">
                     <p class="text-[11px] font-medium uppercase tracking-wide text-muted-foreground md:text-xs">
                       {{ item.label }}
                     </p>
-                    <p
-                      :class="[
-                        item.monospace
-                          ? 'font-mono text-sm font-medium text-foreground md:text-base'
-                          : 'text-sm font-medium text-foreground md:text-base',
-                      ]"
-                    >
-                      {{ item.value }}
-                    </p>
+                    <div class="flex items-center gap-2">
+                      <span
+                        :title="item.value"
+                        :class="[
+                          'flex-1 text-sm font-medium text-foreground md:text-base',
+                          item.monospace ? 'font-mono' : '',
+                          item.truncate ? 'max-w-[220px] truncate md:max-w-[260px]' : '',
+                        ]"
+                      >
+                        {{ item.value }}
+                      </span>
+                      <Button
+                        v-if="item.copyValue"
+                        variant="ghost"
+                        size="icon"
+                        class="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground"
+                        @click="copyText(item.copyValue, item.label)"
+                      >
+                        <Copy class="h-4 w-4" />
+                        <span class="sr-only">复制 {{ item.label }}</span>
+                      </Button>
+                    </div>
                   </div>
                 </div>
 
-                <div v-if="usedMetaInfo.length" class="grid gap-4 border-t border-border/60 pt-4 sm:grid-cols-2 lg:grid-cols-3">
+                <div v-if="usedMetaInfo.length" class="grid gap-4 border-t border-border/60 pt-4 md:grid-cols-3">
                   <div v-for="item in usedMetaInfo" :key="item.key" class="space-y-1">
                     <p class="text-[11px] font-medium uppercase tracking-wide text-muted-foreground md:text-xs">
                       {{ item.label }}
                     </p>
-                    <template v-if="item.badge">
-                      <span
-                        class="inline-flex items-center rounded-full border px-3 py-1 text-[11px] font-medium"
-                        :class="item.badgeClass"
-                      >
-                        {{ item.value }}
-                      </span>
-                    </template>
-                    <p v-else class="text-sm font-medium text-foreground md:text-base">{{ item.value }}</p>
+                    <p class="text-sm font-medium text-foreground md:text-base">{{ item.value }}</p>
                   </div>
+                </div>
+              </div>
+
+              <div class="grid gap-4 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+                <div class="space-y-4 rounded-xl border border-border/60 bg-card/80 p-5 shadow-sm">
+                  <div class="space-y-1">
+                    <p class="text-sm font-semibold text-foreground md:text-base">操作</p>
+                    <p class="text-xs text-muted-foreground md:text-sm">快速处理邀请与团队协作相关事务。</p>
+                  </div>
+                  <div class="flex flex-wrap gap-2">
+                    <Button
+                      variant="outline"
+                      class="flex-1 min-w-[140px] border-emerald-500 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800"
+                      @click="sendInvite()"
+                      :disabled="!orderInfo || sendingInvite"
+                    >
+                      发送邀请
+                    </Button>
+                    <Button
+                      variant="outline"
+                      class="flex-1 min-w-[140px] border-sky-500 text-sky-700 hover:bg-sky-50 hover:text-sky-800"
+                      @click="switchTeam"
+                      :disabled="!orderInfo"
+                    >
+                      一键换团
+                    </Button>
+                    <Button
+                      variant="outline"
+                      class="flex-1 min-w-[140px] border-indigo-500 text-indigo-700 hover:bg-indigo-50 hover:text-indigo-800"
+                      @click="optimizeMembers"
+                      :disabled="!orderInfo"
+                    >
+                      成员优化
+                    </Button>
+                  </div>
+                </div>
+                <div class="space-y-4 rounded-xl border border-border/60 bg-card/80 p-5 shadow-sm">
+                  <div class="space-y-1">
+                    <p class="text-sm font-semibold text-foreground md:text-base">更多</p>
+                    <p class="text-xs text-muted-foreground md:text-sm">补充信息和售后指引，方便后续处理。</p>
+                  </div>
+                  <ul class="space-y-3 text-xs text-muted-foreground md:text-sm">
+                    <li class="space-y-1">
+                      <p class="text-sm font-medium text-foreground md:text-base">售后说明</p>
+                      <p>售后剩余 {{ usedAfterSalesDisplay }}，如需换绑请提供卡密与绑定邮箱。</p>
+                    </li>
+                    <li class="space-y-1">
+                      <p class="text-sm font-medium text-foreground md:text-base">订单备注</p>
+                      <p>{{ orderInfo?.Content || "暂无备注信息，可根据实际情况补充。" }}</p>
+                    </li>
+                    <li class="space-y-1">
+                      <p class="text-sm font-medium text-foreground md:text-base">历史记录</p>
+                      <p>最近验证时间：{{ lastVerifiedDisplay }}</p>
+                    </li>
+                  </ul>
                 </div>
               </div>
             </div>
@@ -252,7 +331,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import VerificationSummaryHeader from "@/components/VerificationSummaryHeader.vue";
-import { ShieldCheck } from "lucide-vue-next";
+import { Copy, ShieldCheck } from "lucide-vue-next";
 import { toast } from "@/components/ui/toast";
 import { Card as requestCard } from "../apijs/uts";
 import ConfirmDialog from "@/components/ConfirmDialog.vue";
@@ -323,8 +402,8 @@ type UsedInfoItem = {
   label: string;
   value: string;
   monospace?: boolean;
-  badge?: boolean;
-  badgeClass?: string;
+  copyValue?: string;
+  truncate?: boolean;
 };
 
 const STATUS_META: Record<
@@ -485,18 +564,22 @@ const usedPrimaryInfo = computed<UsedInfoItem[]>(() => {
       label: "兑换卡密",
       value: cardKey.value || "—",
       monospace: true,
+      copyValue: cardKey.value || "",
     },
     {
       key: "team",
       label: "TEAM ID",
       value: teamId || "—",
       monospace: true,
+      copyValue: teamId || "",
+      truncate: true,
     },
     {
       key: "email",
       label: "绑定邮箱",
       value: email || "—",
       monospace: true,
+      copyValue: email || "",
     },
   ];
 });
@@ -506,22 +589,6 @@ const usedMetaInfo = computed<UsedInfoItem[]>(() => {
   }
 
   const meta: UsedInfoItem[] = [];
-
-  meta.push({
-    key: "card-status",
-    label: "卡密状态",
-    value: statusMeta.value.label,
-    badge: true,
-    badgeClass: "border-emerald-200 bg-emerald-100 text-emerald-700",
-  });
-
-  meta.push({
-    key: "invite-status",
-    label: "邀请状态",
-    value: orderStatusMeta.value.label,
-    badge: true,
-    badgeClass: orderStatusMeta.value.className,
-  });
 
   meta.push({
     key: "after-sales",
@@ -536,7 +603,20 @@ const usedMetaInfo = computed<UsedInfoItem[]>(() => {
     value: formatTimestamp(createdAt),
   });
 
+  meta.push({
+    key: "last-verified",
+    label: "最近检测",
+    value: lastVerifiedDisplay.value,
+  });
+
   return meta;
+});
+
+const usedAfterSalesDisplay = computed(() => {
+  if (afterSalesDays.value === null) {
+    return "暂无记录";
+  }
+  return `${afterSalesDays.value} 天`;
 });
 
 const formatTimestamp = (value: number | null | undefined) => {
@@ -711,6 +791,26 @@ const goBack = () => {
   router.push({ name: "Home" });
 };
 
+const copyText = async (value: string, label: string) => {
+  if (!value) {
+    toast.error(`暂无可复制的${label}`);
+    return;
+  }
+
+  if (typeof navigator === "undefined" || !navigator.clipboard?.writeText) {
+    toast.error("当前环境暂不支持复制");
+    return;
+  }
+
+  try {
+    await navigator.clipboard.writeText(value);
+    toast.success(`${label} 已复制`);
+  } catch (error) {
+    console.error("[VerificationSuccess] copy failed", error);
+    toast.error("复制失败，请稍后重试");
+  }
+};
+
 const sendInvite = async (options?: { order?: OrderInfo; silent?: boolean }) => {
   const targetOrder = options?.order ?? orderInfo.value;
   if (!targetOrder) {
@@ -775,6 +875,23 @@ const sendInvite = async (options?: { order?: OrderInfo; silent?: boolean }) => 
   } finally {
     sendingInvite.value = false;
   }
+};
+
+
+const switchTeam = () => {
+  if (!orderInfo.value) {
+    toast.error("当前卡密未绑定订单");
+    return;
+  }
+  toast.info("一键换团功能暂未开通，请联系客服协助处理。");
+};
+
+const optimizeMembers = () => {
+  if (!orderInfo.value) {
+    toast.error("当前卡密未绑定订单");
+    return;
+  }
+  toast.info("成员优化功能开发中，敬请期待。");
 };
 
 
