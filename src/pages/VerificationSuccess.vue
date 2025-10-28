@@ -79,7 +79,7 @@
         <CardContent class="space-y-6 text-xs text-muted-foreground md:text-sm">
           <template v-if="statusKey === 'used'">
             <section class="space-y-5">
-              <div class="rounded-xl border border-border/70 bg-muted/30 p-5">
+              <div class="rounded-xl border border-border/70 bg-card/80 p-5 shadow-sm">
                 <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   <div v-for="item in usedInfoItems" :key="item.key" class="space-y-1.5">
                     <p class="text-[11px] font-medium uppercase tracking-wide text-muted-foreground md:text-xs">
@@ -122,32 +122,34 @@
                 </div>
               </div>
 
-              <div class="grid gap-4 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
-                <div class="space-y-4 rounded-xl border border-border/70 bg-muted/20 p-5">
+              <div class="space-y-4">
+                <div class="space-y-4 rounded-xl border border-border/80 bg-card p-5 shadow-sm">
                   <div class="flex flex-wrap items-center justify-between gap-2">
-                    <p class="text-sm font-semibold text-foreground md:text-base">操作</p>
-                    <p class="text-[11px] text-muted-foreground md:text-xs">团队与邀请的快捷处理入口</p>
+                    <div>
+                      <p class="text-sm font-semibold text-foreground md:text-base">操作</p>
+                      <p class="text-[11px] text-muted-foreground md:text-xs">团队优化、更换团队、发送邀请快捷入口</p>
+                    </div>
                   </div>
                   <div class="grid gap-2 sm:grid-cols-3">
                     <Button
-                      variant="secondary"
-                      class="w-full justify-center"
+                      variant="default"
+                      class="w-full justify-center text-xs font-medium md:text-sm"
                       @click="sendInvite()"
                       :disabled="!orderInfo || sendingInvite"
                     >
-                      发送邀请
+                      发送邀请链接
                     </Button>
                     <Button
-                      variant="secondary"
-                      class="w-full justify-center"
+                      variant="default"
+                      class="w-full justify-center text-xs font-medium md:text-sm"
                       @click="switchTeam"
                       :disabled="!orderInfo"
                     >
                       更换团队
                     </Button>
                     <Button
-                      variant="secondary"
-                      class="w-full justify-center"
+                      variant="default"
+                      class="w-full justify-center text-xs font-medium md:text-sm"
                       @click="optimizeMembers"
                       :disabled="!orderInfo"
                     >
@@ -155,22 +157,24 @@
                     </Button>
                   </div>
                 </div>
-                <div class="space-y-4 rounded-xl border border-border/70 bg-muted/20 p-5">
-                  <div class="flex items-center justify-between gap-2">
-                    <p class="text-sm font-semibold text-foreground md:text-base">UI 拓展功能</p>
-                    <p class="text-[11px] text-muted-foreground md:text-xs">Plus 与 Grok 增值方案</p>
+                <div class="space-y-4 rounded-xl border border-border/80 bg-card p-5 shadow-sm">
+                  <div class="flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                      <p class="text-sm font-semibold text-foreground md:text-base">UI 拓展功能</p>
+                      <p class="text-[11px] text-muted-foreground md:text-xs">Plus 成品号 / Plus 代充 / Grok 代充</p>
+                    </div>
                   </div>
-                  <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  <div class="grid gap-3 sm:grid-cols-3">
                     <div
                       v-for="feature in uiExtensionFeatures"
                       :key="feature.id"
-                      class="flex flex-col justify-between gap-3 rounded-lg border border-border/60 bg-card p-4"
+                      class="flex flex-col justify-between gap-3 rounded-lg border border-border/70 bg-muted/20 p-4 shadow-sm"
                     >
                       <div class="space-y-1">
                         <p class="text-sm font-semibold text-foreground md:text-base">{{ feature.title }}</p>
                         <p class="text-xs text-muted-foreground md:text-sm">{{ feature.description }}</p>
                       </div>
-                      <Button variant="secondary" size="sm" class="w-full justify-center text-xs md:text-sm">
+                      <Button variant="secondary" size="sm" class="w-full justify-center text-xs font-medium md:text-sm">
                         进入
                       </Button>
                     </div>
