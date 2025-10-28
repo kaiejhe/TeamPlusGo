@@ -1,19 +1,19 @@
 <template>
   <main class="flex min-h-screen items-center justify-center bg-background px-4 py-12">
-    <section class="w-full max-w-2xl space-y-8">
-      <header class="space-y-2 text-center">
-        <h1 class="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">卡密验证</h1>
-        <p class="text-sm text-muted-foreground sm:text-base">请输入兑换卡密，系统会立即完成验证。</p>
+    <section class="w-full max-w-xl space-y-8">
+      <header class="space-y-3 text-center">
+        <h1 class="text-3xl font-semibold tracking-tight text-foreground sm:text-[2rem]">卡密验证</h1>
+        <p class="text-base text-muted-foreground">请输入兑换卡密，系统会立即完成验证。</p>
       </header>
 
       <form
-        class="flex flex-col gap-6 rounded-xl border border-border bg-card/80 p-6 shadow-sm backdrop-blur"
+        class="flex flex-col gap-5 rounded-2xl border border-border/80 bg-card/90 p-7 shadow-sm backdrop-blur"
         @submit.prevent="handleSubmit"
       >
-        <div class="flex w-full items-center gap-3">
+        <div class="flex w-full items-center gap-3 sm:gap-4">
           <Input
             v-model="cardKey"
-            class="h-12 flex-1 rounded-lg text-base"
+            class="h-12 min-w-0 flex-1 rounded-lg text-base"
             type="text"
             placeholder="请输入兑换码"
             :disabled="submitting"
@@ -28,7 +28,7 @@
             {{ submitting ? "验证中..." : "验证" }}
           </Button>
         </div>
-        <p class="text-center text-xs text-muted-foreground">
+        <p class="text-center text-sm text-muted-foreground">
           支持大写字母和数字，格式示例：ABCD-EFGH-IJKL-MNOP
         </p>
       </form>

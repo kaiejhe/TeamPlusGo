@@ -1,5 +1,5 @@
 <template>
-  <main class="min-h-screen bg-slate-100 px-6 py-16">
+  <main class="min-h-screen bg-background px-4 py-12">
     <ConfirmDialog
       :open="confirmDialogState.open"
       :card="confirmDialogState.card"
@@ -8,48 +8,48 @@
       @confirm="handleConfirmDialog(true)"
       @cancel="handleConfirmDialog(false)"
     />
-    <div class="mx-auto w-full max-w-4xl space-y-6">
-      <Card class="shadow-sm">
-        <CardHeader class="space-y-4">
+    <div class="mx-auto w-full max-w-4xl space-y-8">
+      <Card class="border border-border/80 bg-card shadow-sm">
+        <CardHeader class="space-y-0">
           <VerificationSummaryHeader
             :title="headerMeta.title"
             :description="headerMeta.description"
             back-label="返回首页"
             @back="goBack"
           />
-          <CardDescription v-if="statusMeta.description" class="text-sm text-slate-600 md:text-base">
-            {{ statusMeta.description }}
-          </CardDescription>
         </CardHeader>
       </Card>
 
-      <Card class="shadow-sm">
-        <CardHeader class="space-y-2">
-          <CardTitle class="flex items-center gap-2 text-xl">
+      <Card class="border border-border/80 bg-card shadow-sm">
+        <CardHeader class="space-y-3">
+          <CardTitle class="flex items-center gap-2 text-xl text-foreground">
             <ShieldCheck class="h-5 w-5 text-primary" />
             {{ statusMeta.title }}
           </CardTitle>
-          <CardDescription v-if="statusMeta.hint">
+          <CardDescription v-if="statusMeta.description" class="text-sm text-muted-foreground">
+            {{ statusMeta.description }}
+          </CardDescription>
+          <CardDescription v-if="statusMeta.hint" class="text-sm text-muted-foreground">
             {{ statusMeta.hint }}
           </CardDescription>
         </CardHeader>
 
-        <CardContent class="space-y-6">
-          <div class="grid gap-3 rounded-lg border border-slate-200 bg-white/80 p-4 text-xs text-slate-600">
-            <div class="flex items-center justify-between">
-              <span class="text-slate-500">卡密状态</span>
-              <span class="font-medium text-slate-900">{{ statusMeta.label }}</span>
+        <CardContent class="space-y-6 text-sm text-muted-foreground">
+          <div class="grid gap-3 rounded-xl border border-border/60 bg-muted/50 p-4 text-sm">
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-muted-foreground">卡密状态</span>
+              <span class="font-medium text-foreground">{{ statusMeta.label }}</span>
             </div>
-            <div class="flex items-center justify-between" v-if="afterSalesDays !== null">
-              <span class="text-slate-500">售后时长</span>
-              <span class="font-medium text-slate-900">{{ afterSalesDays }} 天</span>
+            <div class="flex items-center justify-between gap-2" v-if="afterSalesDays !== null">
+              <span class="text-muted-foreground">售后时长</span>
+              <span class="font-medium text-foreground">{{ afterSalesDays }} 天</span>
             </div>
-            <div class="flex items-center justify-between" v-if="cardInfo?.AddTime">
-              <span class="text-slate-500">创建时间</span>
-              <span class="font-medium text-slate-900">{{ formatTimestamp(cardInfo.AddTime) }}</span>
+            <div class="flex items-center justify-between gap-2" v-if="cardInfo?.AddTime">
+              <span class="text-muted-foreground">创建时间</span>
+              <span class="font-medium text-foreground">{{ formatTimestamp(cardInfo.AddTime) }}</span>
             </div>
-            <div class="flex items-center justify-between" v-if="orderInfo">
-              <span class="text-slate-500">邀请状态</span>
+            <div class="flex items-center justify-between gap-2" v-if="orderInfo">
+              <span class="text-muted-foreground">邀请状态</span>
               <span
                 class="inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-medium"
                 :class="orderStatusMeta.className"
@@ -58,28 +58,28 @@
               </span>
             </div>
           </div>
-          <div class="grid gap-4 rounded-lg bg-slate-50 px-4 py-3 text-sm text-slate-600 shadow-sm">
+          <div class="grid gap-4 rounded-xl border border-border/40 bg-muted/30 px-4 py-3 shadow-sm">
             <div class="flex flex-wrap items-center justify-between gap-3">
-              <div class="space-y-1">
-                <p class="text-xs text-slate-500">Team 兑换码</p>
-                <p class="font-mono text-sm font-medium text-slate-900">{{ cardKey }}</p>
+              <div class="space-y-1 text-sm">
+                <p class="text-xs font-medium uppercase tracking-wide text-muted-foreground">Team 兑换码</p>
+                <p class="font-mono text-base font-medium text-foreground">{{ cardKey }}</p>
               </div>
               <div class="text-right">
-                <p class="text-xs text-slate-500">最近检测</p>
-                <p class="text-xs font-medium text-slate-700">{{ lastVerifiedDisplay }}</p>
+                <p class="text-xs font-medium uppercase tracking-wide text-muted-foreground">最近检测</p>
+                <p class="text-sm font-medium text-muted-foreground">{{ lastVerifiedDisplay }}</p>
               </div>
             </div>
 
-            <div class="grid gap-3 text-xs text-slate-600 sm:grid-cols-2">
+            <div class="grid gap-3 text-sm sm:grid-cols-2">
               <div class="space-y-1">
-                <p class="text-xs text-slate-500">绑定邮箱</p>
-                <p class="font-mono text-sm text-slate-900">
+                <p class="text-xs font-medium uppercase tracking-wide text-muted-foreground">绑定邮箱</p>
+                <p class="font-mono text-sm text-foreground">
                   {{ orderInfo?.Order_us_Email ?? storedState?.email ?? '—' }}
                 </p>
               </div>
               <div class="space-y-1">
-                <p class="text-xs text-slate-500">Team ID</p>
-                <p class="font-mono text-[11px] text-slate-900">
+                <p class="text-xs font-medium uppercase tracking-wide text-muted-foreground">Team ID</p>
+                <p class="font-mono text-[13px] text-foreground">
                   {{ orderInfo?.OrderTeamID ?? orderInfo?.TeamCard ?? cardKey }}
                 </p>
               </div>
@@ -87,12 +87,12 @@
           </div>
 
           <section v-if="statusKey === 'unused'" class="space-y-5">
-            <Alert variant="default">
-              <AlertDescription class="space-y-2">
-                <p class="text-sm leading-relaxed text-slate-600">
+            <Alert variant="default" class="border border-border/60 bg-muted/40">
+              <AlertDescription class="space-y-2 text-sm text-muted-foreground">
+                <p class="leading-relaxed">
                   绑定邮箱前，请先确认 GPT 注册邮箱，确保填写的信息准确无误。
                 </p>
-                <details class="group space-y-1 text-xs leading-relaxed text-slate-600">
+                <details class="group space-y-1 text-xs leading-relaxed text-muted-foreground">
                   <summary
                     class="cursor-pointer text-sm font-medium text-primary transition hover:underline group-open:text-primary/80"
                   >
@@ -125,7 +125,7 @@
                     </li>
                     <li>
                       页面返回的 JSON 数据中
-                      <span class="font-mono text-slate-700">user.email</span>
+                      <span class="font-mono text-muted-foreground">user.email</span>
                       字段即为当前绑定的邮箱。
                     </li>
                   </ol>
@@ -180,7 +180,7 @@
             </form>
           </section>
 
-          <section v-else class="space-y-4 text-xs text-slate-600">
+          <section v-else class="space-y-4 text-sm text-muted-foreground">
             <Alert :variant="statusKey === 'locked' ? 'destructive' : 'default'">
               <AlertTitle>{{ statusMeta.label }}</AlertTitle>
               <AlertDescription>
@@ -230,7 +230,6 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
