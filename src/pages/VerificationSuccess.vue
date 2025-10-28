@@ -1,5 +1,5 @@
 <template>
-  <main class="min-h-[100dvh] bg-background px-4 py-8 md:py-10">
+  <main class="min-h-[100dvh] bg-background px-4 py-6 md:py-8">
     <ConfirmDialog
       :open="confirmDialogState.open"
       :card="confirmDialogState.card"
@@ -21,27 +21,42 @@
       </Card>
 
       <Card class="border border-border/80 bg-card shadow-sm">
-        <CardHeader v-if="statusKey === 'used'" class="space-y-4 pb-4">
-          <div class="flex flex-wrap items-start justify-between gap-6">
+        <CardHeader
+          v-if="statusKey === 'used'"
+          class="space-y-0 border-b border-border/70 pb-5"
+        >
+          <div
+            class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between"
+          >
             <div class="space-y-1">
-              <CardTitle class="flex items-center gap-2 text-base font-semibold text-foreground md:text-lg">
+              <CardTitle
+                class="flex items-center gap-2 text-base font-semibold text-foreground md:text-lg"
+              >
                 <ShieldCheck class="h-5 w-5 text-primary" />
                 Team 兑换码兑换详情
               </CardTitle>
               <CardDescription class="text-xs text-muted-foreground md:text-sm">
-                核心字段一目了然，便于后续处理与记录。
+                核心字段一目了然，便于后续跟进与售后处理。
               </CardDescription>
             </div>
-            <div class="flex flex-col items-start gap-2 text-[11px] text-muted-foreground md:text-xs md:flex-row md:items-center">
+            <div class="flex flex-wrap items-center gap-3 text-[11px] text-muted-foreground md:text-xs">
               <div class="flex items-center gap-2">
                 <span class="font-medium uppercase tracking-wide">卡密状态</span>
-                <Badge variant="outline" :class="cardStatusBadgeClass" class="px-3 py-1 text-[11px] font-semibold md:text-xs">
+                <Badge
+                  variant="outline"
+                  :class="cardStatusBadgeClass"
+                  class="px-3 py-1 text-[11px] font-semibold md:text-xs"
+                >
                   {{ statusMeta.label }}
                 </Badge>
               </div>
               <div class="flex items-center gap-2">
                 <span class="font-medium uppercase tracking-wide">邀请状态</span>
-                <Badge variant="outline" :class="orderStatusBadgeClass" class="px-3 py-1 text-[11px] font-semibold md:text-xs">
+                <Badge
+                  variant="outline"
+                  :class="orderStatusBadgeClass"
+                  class="px-3 py-1 text-[11px] font-semibold md:text-xs"
+                >
                   {{ orderStatusMeta.label }}
                 </Badge>
               </div>
@@ -63,103 +78,106 @@
 
         <CardContent class="space-y-6 text-xs text-muted-foreground md:text-sm">
           <template v-if="statusKey === 'used'">
-            <section class="rounded-xl border border-border/60 bg-card/80 p-5 shadow-sm">
-              <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                <div v-for="item in usedInfoItems" :key="item.key" class="space-y-1.5">
-                  <p class="text-[11px] font-medium uppercase tracking-wide text-muted-foreground md:text-xs">
-                    {{ item.label }}
-                  </p>
-                  <div class="flex items-center gap-2">
-                    <Badge
-                      v-if="item.badgeClass"
-                      variant="outline"
-                      :class="[
-                        item.badgeClass,
-                        'px-3 py-1 text-[11px] font-semibold md:text-xs',
-                      ]"
-                    >
-                      {{ item.displayValue ?? item.value }}
-                    </Badge>
-                    <span
-                      v-else
-                      :title="item.value"
-                      :class="[
-                        'flex-1 truncate text-sm font-medium text-foreground md:text-base',
-                        item.monospace ? 'font-mono' : '',
-                        item.truncate ? 'max-w-[220px] md:max-w-[260px]' : 'max-w-full',
-                      ]"
-                    >
-                      {{ item.displayValue ?? item.value }}
-                    </span>
+            <section class="space-y-5">
+              <div class="rounded-xl border border-border/70 bg-muted/30 p-5">
+                <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  <div v-for="item in usedInfoItems" :key="item.key" class="space-y-1.5">
+                    <p class="text-[11px] font-medium uppercase tracking-wide text-muted-foreground md:text-xs">
+                      {{ item.label }}
+                    </p>
+                    <div class="flex items-center gap-2">
+                      <Badge
+                        v-if="item.badgeClass"
+                        variant="outline"
+                        :class="[
+                          item.badgeClass,
+                          'px-3 py-1 text-[11px] font-semibold md:text-xs',
+                        ]"
+                      >
+                        {{ item.displayValue ?? item.value }}
+                      </Badge>
+                      <span
+                        v-else
+                        :title="item.value"
+                        :class="[
+                          'flex-1 truncate text-sm font-medium text-foreground md:text-base',
+                          item.monospace ? 'font-mono' : '',
+                          item.truncate ? 'max-w-[220px] md:max-w-[260px]' : 'max-w-full',
+                        ]"
+                      >
+                        {{ item.displayValue ?? item.value }}
+                      </span>
+                      <Button
+                        v-if="item.copyValue"
+                        variant="ghost"
+                        size="icon"
+                        class="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground"
+                        @click="copyText(item.copyValue, item.label)"
+                      >
+                        <Copy class="h-4 w-4" />
+                        <span class="sr-only">复制 {{ item.label }}</span>
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="grid gap-4 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
+                <div class="space-y-4 rounded-xl border border-border/70 bg-muted/20 p-5">
+                  <div class="flex flex-wrap items-center justify-between gap-2">
+                    <p class="text-sm font-semibold text-foreground md:text-base">操作</p>
+                    <p class="text-[11px] text-muted-foreground md:text-xs">团队与邀请的快捷处理入口</p>
+                  </div>
+                  <div class="grid gap-2 sm:grid-cols-3">
                     <Button
-                      v-if="item.copyValue"
-                      variant="ghost"
-                      size="icon"
-                      class="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground"
-                      @click="copyText(item.copyValue, item.label)"
+                      variant="secondary"
+                      class="w-full justify-center"
+                      @click="sendInvite()"
+                      :disabled="!orderInfo || sendingInvite"
                     >
-                      <Copy class="h-4 w-4" />
-                      <span class="sr-only">复制 {{ item.label }}</span>
+                      发送邀请
                     </Button>
+                    <Button
+                      variant="secondary"
+                      class="w-full justify-center"
+                      @click="switchTeam"
+                      :disabled="!orderInfo"
+                    >
+                      更换团队
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      class="w-full justify-center"
+                      @click="optimizeMembers"
+                      :disabled="!orderInfo"
+                    >
+                      团队优化
+                    </Button>
+                  </div>
+                </div>
+                <div class="space-y-4 rounded-xl border border-border/70 bg-muted/20 p-5">
+                  <div class="flex items-center justify-between gap-2">
+                    <p class="text-sm font-semibold text-foreground md:text-base">UI 拓展功能</p>
+                    <p class="text-[11px] text-muted-foreground md:text-xs">Plus 与 Grok 增值方案</p>
+                  </div>
+                  <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    <div
+                      v-for="feature in uiExtensionFeatures"
+                      :key="feature.id"
+                      class="flex flex-col justify-between gap-3 rounded-lg border border-border/60 bg-card p-4"
+                    >
+                      <div class="space-y-1">
+                        <p class="text-sm font-semibold text-foreground md:text-base">{{ feature.title }}</p>
+                        <p class="text-xs text-muted-foreground md:text-sm">{{ feature.description }}</p>
+                      </div>
+                      <Button variant="secondary" size="sm" class="w-full justify-center text-xs md:text-sm">
+                        进入
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </div>
             </section>
-            <div class="grid gap-4 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
-              <div class="space-y-4 rounded-xl border border-border/60 bg-card/80 p-5 shadow-sm">
-                <div class="flex flex-wrap items-center justify-between gap-2">
-                  <p class="text-sm font-semibold text-foreground md:text-base">操作</p>
-                  <p class="text-[11px] text-muted-foreground md:text-xs">团队与邀请的快捷处理入口</p>
-                </div>
-                <div class="grid gap-2 sm:grid-cols-3">
-                  <Button
-                    variant="default"
-                    class="w-full justify-center"
-                    @click="sendInvite()"
-                    :disabled="!orderInfo || sendingInvite"
-                  >
-                    发送邀请
-                  </Button>
-                  <Button
-                    variant="default"
-                    class="w-full justify-center"
-                    @click="switchTeam"
-                    :disabled="!orderInfo"
-                  >
-                    更换团队
-                  </Button>
-                  <Button
-                    variant="default"
-                    class="w-full justify-center"
-                    @click="optimizeMembers"
-                    :disabled="!orderInfo"
-                  >
-                    团队优化
-                  </Button>
-                </div>
-              </div>
-              <div class="space-y-4 rounded-xl border border-border/60 bg-card/80 p-5 shadow-sm">
-                <div class="flex items-center justify-between gap-2">
-                  <p class="text-sm font-semibold text-foreground md:text-base">UI 拓展功能</p>
-                  <p class="text-[11px] text-muted-foreground md:text-xs">Plus 与 Grok 增值方案</p>
-                </div>
-                <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                  <div
-                    v-for="feature in uiExtensionFeatures"
-                    :key="feature.id"
-                    class="flex flex-col justify-between gap-3 rounded-lg border border-border/60 bg-muted/40 p-4"
-                  >
-                    <div class="space-y-1">
-                      <p class="text-sm font-semibold text-foreground md:text-base">{{ feature.title }}</p>
-                      <p class="text-xs text-muted-foreground md:text-sm">{{ feature.description }}</p>
-                    </div>
-                    <Button variant="default" size="sm" class="w-full justify-center text-xs md:text-sm">
-                      进入
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </div>
           </template>
           <template v-else>
             <div class="grid gap-3 rounded-xl border border-border/60 bg-muted/50 p-4 text-xs md:text-sm">
