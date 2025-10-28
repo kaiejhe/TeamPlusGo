@@ -1,23 +1,38 @@
 <template>
-  <main class="flex min-h-screen items-center justify-center bg-slate-50 px-4">
-    <form class="flex w-full max-w-sm flex-col gap-4" @submit.prevent="handleSubmit">
-      <input
-        v-model="cardKey"
-        class="h-12 w-full rounded-lg border border-slate-300 px-4 text-sm text-slate-900 shadow-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200 disabled:bg-slate-100"
-        type="text"
-        placeholder="请输入入会密钥"
-        :disabled="submitting"
-        maxlength="19"
-        autofocus
-      />
-      <button
-        type="submit"
-        class="h-12 w-full rounded-lg bg-slate-900 px-4 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-60"
-        :disabled="submitting"
+  <main class="flex min-h-screen items-center justify-center bg-background px-4 py-12">
+    <section class="w-full max-w-2xl space-y-8">
+      <header class="space-y-2 text-center">
+        <h1 class="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">卡密验证</h1>
+        <p class="text-sm text-muted-foreground sm:text-base">请输入兑换卡密，系统会立即完成验证。</p>
+      </header>
+
+      <form
+        class="flex flex-col gap-6 rounded-xl border border-border bg-card/80 p-6 shadow-sm backdrop-blur"
+        @submit.prevent="handleSubmit"
       >
-        {{ submitting ? "验证中" : "验证" }}
-      </button>
-    </form>
+        <div class="flex w-full items-center gap-3">
+          <Input
+            v-model="cardKey"
+            class="h-12 flex-1 rounded-lg text-base"
+            type="text"
+            placeholder="请输入兑换码"
+            :disabled="submitting"
+            maxlength="19"
+            autofocus
+          />
+          <Button
+            type="submit"
+            class="h-12 whitespace-nowrap px-6"
+            :disabled="submitting"
+          >
+            {{ submitting ? "验证中..." : "验证" }}
+          </Button>
+        </div>
+        <p class="text-center text-xs text-muted-foreground">
+          支持大写字母和数字，格式示例：ABCD-EFGH-IJKL-MNOP
+        </p>
+      </form>
+    </section>
   </main>
 </template>
 
@@ -25,6 +40,8 @@
 import { ref } from "vue";
 import { useRouter } from "vue-router";
 import { toast } from "@/components/ui/toast";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Card as verifyCard } from "../apijs/uts";
 
 const router = useRouter();
@@ -33,6 +50,7 @@ const cardKey = ref("");
 const submitting = ref(false);
 
 const CARD_PATTERN = /^[A-Z0-9]{4}(?:-[A-Z0-9]{4}){3}$/;
+const STORAGE_KEY = "team-verified-card";
 
 const handleSubmit = async () => {
   if (submitting.value) {
@@ -61,6 +79,22 @@ const handleSubmit = async () => {
 
     if (response?.ok) {
       toast.success(response.msg ?? "卡密验证成功");
+      const now = Date.now();
+      if (typeof window !== "undefined") {
+        const payload = {
+          card: trimmed,
+          verifiedAt: now,
+          email:
+            typeof response?.data?.Order?.Order_us_Email === "string"
+              ? response.data.Order.Order_us_Email
+              : undefined,
+          inviteCount: 0,
+          history: [],
+          cardInfo: response?.data?.Card ?? null,
+          orderInfo: response?.data?.Order ?? null,
+        };
+        window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+      }
       router.push({
         name: "VerificationSuccess",
         query: { card: trimmed },
