@@ -385,6 +385,12 @@ type OrderInfo = {
   AddTime?: number;
   UpdTime?: number | null;
   Content?: string;
+  PlusEmail?: string;
+  PlusPassword?: string;
+  PlusState?: string;
+  PlusAccToken?: string;
+  PlusCard?: string;
+  PlusUserID?: string;
   [key: string]: unknown;
 };
 
@@ -484,7 +490,10 @@ const looksLikeOrder = (value: unknown): value is OrderInfo => {
   return (
     "OrderTeamID" in record ||
     "Order_us_Email" in record ||
-    "TeamOrderState" in record
+    "TeamOrderState" in record ||
+    "PlusEmail" in record ||
+    "PlusPassword" in record ||
+    "PlusState" in record
   );
 };
 
@@ -596,6 +605,7 @@ const ACCOUNT_LABEL_MAP: Record<string, string> = {
   accounttype: "账号类型",
   bindemail: "绑定邮箱",
   email: "邮箱",
+  emailtxt: "邮箱说明",
   expireat: "到期时间",
   expiretime: "到期时间",
   login: "登录账号",
@@ -611,6 +621,12 @@ const ACCOUNT_LABEL_MAP: Record<string, string> = {
   type: "账号类型",
   url: "登录地址",
   username: "用户名",
+  pluscard: "兑换码",
+  plusacctoken: "访问令牌",
+  plusemail: "登录邮箱",
+  pluspassword: "登录密码",
+  plusstate: "卡密状态",
+  plususerid: "用户 ID",
 };
 
 const ACCOUNT_KEY_HINTS = [
@@ -629,7 +645,40 @@ const ACCOUNT_KEY_HINTS = [
   "mail",
 ];
 
-const normalizeAccountKey = (key: string) => key.replace(/[^a-z0-9]/gi, "").toLowerCase();
+const normalizeAccountKey = (key: string) =>
+  key.replace(/[^a-z0-9]/gi, "").toLowerCase();
+
+const ACCOUNT_STATE_KEYS = new Set(["plusstate", "teamcardstate"]);
+const ACCOUNT_EXTRA_KEYS = new Set([
+  "pluscard",
+  "plusstate",
+  "plususerid",
+  "teamcard",
+  "teamcardstate",
+]);
+
+const shouldKeepAccountEntry = (normalizedKey: string, value: unknown) => {
+  if (!normalizedKey) {
+    return false;
+  }
+  if (typeof value === "object" && value !== null) {
+    return false;
+  }
+
+  if (ACCOUNT_EXTRA_KEYS.has(normalizedKey)) {
+    return true;
+  }
+
+  return ACCOUNT_KEY_HINTS.some((hint) => normalizedKey.includes(hint));
+};
+
+const formatAccountState = (value: unknown) => {
+  if (value === null || value === undefined) {
+    return "—";
+  }
+  const raw = String(value).trim().toLowerCase();
+  return CARD_STATE_LABELS[raw] ?? formatAccountValue(value);
+};
 
 const resolveAccountLabel = (key: string) => {
   const normalized = normalizeAccountKey(key);
@@ -695,6 +744,28 @@ const extractAccountRecord = (source: unknown, depth = 0): Record<string, unknow
     return null;
   }
 
+  const preferredContainers = [
+    "Order",
+    "order",
+    "Account",
+    "account",
+    "Accounts",
+    "accounts",
+  ];
+
+  for (const key of preferredContainers) {
+    if (!(key in record)) {
+      continue;
+    }
+    const value = record[key];
+    if (typeof value === "object" && value && value !== record) {
+      const candidate = extractAccountRecord(value, depth + 1);
+      if (candidate) {
+        return candidate;
+      }
+    }
+  }
+
   const normalizedKeys = entries.map(([key]) => normalizeAccountKey(key));
   const hasHint = normalizedKeys.some((key) =>
     ACCOUNT_KEY_HINTS.some((hint) => key.includes(hint)),
@@ -747,26 +818,58 @@ const buildAccountSummaryItems = (source: unknown): SummaryItem[] => {
     return [];
   }
 
-  return Object.entries(record)
-    .filter(([key]) => !["ok", "msg"].includes(key))
-    .map(([key, value]) => {
-      const normalizedKey = normalizeAccountKey(key) || key;
-      const display = formatAccountValue(value);
-      const copyValue =
-        typeof value === "string" && value.trim()
-          ? value
-          : typeof value === "number" && Number.isFinite(value)
-            ? String(value)
-            : null;
+  const items: SummaryItem[] = [];
+  const seen = new Set<string>();
 
-      return {
-        key: `account-${normalizedKey}`,
-        label: resolveAccountLabel(key) || key,
-        value: display,
-        copyValue,
-      };
-    })
-    .filter((item) => item.value && item.value !== "—");
+  const pushEntry = (key: string, value: unknown) => {
+    const normalizedKey = normalizeAccountKey(key) || key;
+    if (seen.has(normalizedKey) || !shouldKeepAccountEntry(normalizedKey, value)) {
+      return;
+    }
+
+    const copyValue =
+      typeof value === "string" && value.trim()
+        ? value
+        : typeof value === "number" && Number.isFinite(value)
+          ? String(value)
+          : null;
+
+    const display = ACCOUNT_STATE_KEYS.has(normalizedKey)
+      ? formatAccountState(value)
+      : formatAccountValue(value);
+
+    if (!display || display === "—") {
+      return;
+    }
+
+    items.push({
+      key: `account-${normalizedKey}`,
+      label: resolveAccountLabel(key) || key,
+      value: display,
+      copyValue,
+    });
+
+    seen.add(normalizedKey);
+  };
+
+  for (const [key, value] of Object.entries(record)) {
+    if (["ok", "msg"].includes(key)) {
+      continue;
+    }
+    pushEntry(key, value);
+  }
+
+  if (source && typeof source === "object" && source !== record) {
+    const extras = source as Record<string, unknown>;
+    for (const [key, value] of Object.entries(extras)) {
+      if (["ok", "msg", "Card", "card", "Order", "order", "data", "Data"].includes(key)) {
+        continue;
+      }
+      pushEntry(key, value);
+    }
+  }
+
+  return items;
 };
 
 const buildSummaryItems = (order: OrderInfo | null, card: CardInfo | null): SummaryItem[] => {
@@ -776,7 +879,11 @@ const buildSummaryItems = (order: OrderInfo | null, card: CardInfo | null): Summ
     { key: "status", label: "卡密状态", value: formatCardStateLabel(card, order) },
     { key: "type", label: "卡密类型", value: formatCardType(card, order) },
     { key: "teamId", label: "团队编号", value: teamId.display, copyValue: teamId.raw },
-    { key: "email", label: "绑定邮箱", value: order?.Order_us_Email ?? "—" },
+    {
+      key: "email",
+      label: "绑定邮箱",
+      value: order?.Order_us_Email ?? order?.PlusEmail ?? "—",
+    },
     { key: "invite", label: "邀请状态", value: formatInviteStatusLabel(order) },
     { key: "createdAt", label: "创建时间", value: formatTimestamp(order?.AddTime ?? card?.AddTime) },
   ];
