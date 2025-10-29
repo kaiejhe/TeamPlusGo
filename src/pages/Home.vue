@@ -73,13 +73,11 @@
               </Button>
 
               <div
-                v-if="bizOne.response"
+                v-if="bizOne.response && bizOne.response.ok"
                 class="space-y-4 rounded-lg border border-border/70 bg-muted/40 p-4 text-sm"
               >
                 <div class="flex flex-wrap items-center gap-2">
-                  <Badge :variant="bizOne.response.ok ? 'default' : 'destructive'">
-                    {{ bizOne.response.ok ? '创建成功' : '创建失败' }}
-                  </Badge>
+                  <Badge>创建成功</Badge>
                   <span class="text-muted-foreground">{{ bizOne.response.message }}</span>
                 </div>
 
@@ -211,11 +209,12 @@
                 </Button>
               </div>
 
-              <div v-if="bizFour.result" class="space-y-4 rounded-lg border border-border/70 bg-muted/40 p-4 text-sm">
+              <div
+                v-if="bizFour.result && bizFour.result.ok"
+                class="space-y-4 rounded-lg border border-border/70 bg-muted/40 p-4 text-sm"
+              >
                 <div class="flex flex-wrap items-center gap-2">
-                  <Badge :variant="bizFour.result.ok ? 'default' : 'destructive'">
-                    {{ bizFour.result.ok ? '验证成功' : '验证失败' }}
-                  </Badge>
+                  <Badge>验证成功</Badge>
                   <Badge :variant="usageStatusMeta[bizFour.result.status].badgeVariant">
                     {{ usageStatusMeta[bizFour.result.status].label }}
                   </Badge>
@@ -252,9 +251,6 @@
                 </div>
               </div>
 
-              <p v-else-if="bizFour.error" class="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
-                {{ bizFour.error }}
-              </p>
             </section>
           </div>
         </CardContent>
