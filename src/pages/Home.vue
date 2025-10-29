@@ -31,7 +31,6 @@
             <section v-if="activeTab === 'B1'" class="space-y-6">
               <header class="space-y-1">
                 <h2 class="text-lg font-semibold text-foreground">Business(Team) 自助进团</h2>
-                <p class="text-sm text-muted-foreground">Business(Team) 24小时自助进团</p>
               </header>
 
               <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -84,8 +83,7 @@
 
             <section v-else-if="activeTab === 'B2'" class="space-y-6">
               <header class="space-y-1">
-                <h2 class="text-lg font-semibold text-foreground">Plus 24 小时自助兑换</h2>
-                <p class="text-sm text-muted-foreground">输入兑换码后提交，系统会返回对应的账号信息。</p>
+                <h2 class="text-lg font-semibold text-foreground">输入兑换码领取Gpt Plus帐号信息</h2>
               </header>
 
               <div class="space-y-2">
