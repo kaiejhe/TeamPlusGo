@@ -121,7 +121,7 @@
             <section v-else-if="activeTab === 'B2'" class="space-y-6">
               <header class="space-y-1">
                 <h2 class="text-lg font-semibold text-foreground">Plus 24 小时自助兑换</h2>
-                <p class="text-sm text-muted-foreground">输入兑换码即可领取账号信息，示例返回固定数据。</p>
+                <p class="text-sm text-muted-foreground">输入兑换码后提交，系统会返回对应的账号信息。</p>
               </header>
 
               <div class="space-y-2">
@@ -140,15 +140,49 @@
                   格式应为 4-4-4-4（仅大写字母/数字）
                 </p>
                 <Button class="w-full md:w-auto" :disabled="!bizTwoValid || bizTwo.submitting" @click="submitBizTwo">
-                  {{ bizTwo.submitting ? '处理中…' : '领取账号（演示 UI）' }}
+                  {{ bizTwo.submitting ? '处理中…' : '领取账号' }}
                 </Button>
               </div>
 
-              <div v-if="bizTwo.response" class="space-y-2 rounded-lg border border-border/70 bg-muted/40 p-4 text-sm">
-                <p>邮箱：{{ bizTwo.response.login_email }}</p>
-                <p>登录地址：{{ bizTwo.response.login_url }}</p>
-                <p>密码：******</p>
-                <p>邮箱密钥：****-****</p>
+              <div
+                v-if="bizTwo.response && bizTwo.response.ok"
+                class="space-y-4 rounded-xl border border-border/70 bg-background/90 p-4 text-sm shadow-sm"
+              >
+                <div class="flex flex-wrap items-center gap-2">
+                  <Badge variant="default">验证成功</Badge>
+                  <span class="text-xs text-muted-foreground">{{ bizTwo.response.message }}</span>
+                </div>
+
+                <div v-if="bizTwoSummaryItems.length" class="space-y-3">
+                  <div class="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                    <User class="h-4 w-4" />
+                    <span>账号信息</span>
+                  </div>
+                  <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    <div
+                      v-for="item in bizTwoSummaryItems"
+                      :key="item.key"
+                      class="rounded-lg border border-border/60 bg-muted/30 p-3"
+                    >
+                      <p class="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                        {{ item.label }}
+                      </p>
+                      <div class="mt-1 flex items-center gap-2">
+                        <span class="font-semibold text-foreground">{{ item.value }}</span>
+                        <Button
+                          v-if="item.copyValue"
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          class="h-7 w-7"
+                          @click="copyText(item.copyValue)"
+                        >
+                          <Copy class="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </section>
 
@@ -299,7 +333,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/components/ui/toast";
-import { CreditCard, Copy } from "lucide-vue-next";
+import { CreditCard, Copy, User } from "lucide-vue-next";
 import { Card as requestCard } from "@/apijs/uts";
 
 const tabs = [
@@ -382,6 +416,12 @@ type SummaryItem = {
   label: string;
   value: string;
   copyValue?: string | null;
+};
+
+type BizTwoResponse = {
+  ok: boolean;
+  message: string;
+  items: SummaryItem[];
 };
 
 const usageStatusMeta: Record<UsageStatus, { label: string; badgeVariant: "default" | "secondary" | "destructive" }> = {
@@ -548,6 +588,187 @@ const formatCardType = (card: CardInfo | null, order: OrderInfo | null) => {
   return raw || "—";
 };
 
+const ACCOUNT_LABEL_MAP: Record<string, string> = {
+  account: "账号",
+  accountemail: "登录邮箱",
+  accountname: "账号名称",
+  accountpassword: "登录密码",
+  accounttype: "账号类型",
+  bindemail: "绑定邮箱",
+  email: "邮箱",
+  expireat: "到期时间",
+  expiretime: "到期时间",
+  login: "登录账号",
+  loginemail: "登录邮箱",
+  loginpassword: "登录密码",
+  loginurl: "登录地址",
+  mailbox: "邮箱账号",
+  mailboxkey: "邮箱密钥",
+  password: "登录密码",
+  passwd: "登录密码",
+  recoveryemail: "恢复邮箱",
+  token: "令牌",
+  type: "账号类型",
+  url: "登录地址",
+  username: "用户名",
+};
+
+const ACCOUNT_KEY_HINTS = [
+  "account",
+  "bind",
+  "email",
+  "login",
+  "password",
+  "passwd",
+  "url",
+  "token",
+  "key",
+  "type",
+  "expire",
+  "user",
+  "mail",
+];
+
+const normalizeAccountKey = (key: string) => key.replace(/[^a-z0-9]/gi, "").toLowerCase();
+
+const resolveAccountLabel = (key: string) => {
+  const normalized = normalizeAccountKey(key);
+  if (normalized && ACCOUNT_LABEL_MAP[normalized]) {
+    return ACCOUNT_LABEL_MAP[normalized];
+  }
+  return key
+    .replace(/_/g, " ")
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .replace(/\s+/g, " ")
+    .trim();
+};
+
+const formatAccountValue = (value: unknown): string => {
+  if (value === null || value === undefined) {
+    return "—";
+  }
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    return trimmed ? trimmed : "—";
+  }
+  if (typeof value === "number") {
+    return Number.isFinite(value) ? String(value) : "—";
+  }
+  if (typeof value === "boolean") {
+    return value ? "是" : "否";
+  }
+  if (Array.isArray(value)) {
+    const joined = value
+      .map((item) => formatAccountValue(item))
+      .filter((item) => item && item !== "—")
+      .join(" / ");
+    return joined || "—";
+  }
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime()) ? "—" : value.toLocaleString("zh-CN", { hour12: false });
+  }
+  return JSON.stringify(value);
+};
+
+const extractAccountRecord = (source: unknown, depth = 0): Record<string, unknown> | null => {
+  if (!source || depth > 6) {
+    return null;
+  }
+
+  if (Array.isArray(source)) {
+    for (const item of source) {
+      const candidate = extractAccountRecord(item, depth + 1);
+      if (candidate) {
+        return candidate;
+      }
+    }
+    return null;
+  }
+
+  if (typeof source !== "object") {
+    return null;
+  }
+
+  const record = source as Record<string, unknown>;
+  const entries = Object.entries(record);
+  if (!entries.length) {
+    return null;
+  }
+
+  const normalizedKeys = entries.map(([key]) => normalizeAccountKey(key));
+  const hasHint = normalizedKeys.some((key) =>
+    ACCOUNT_KEY_HINTS.some((hint) => key.includes(hint)),
+  );
+  if (hasHint) {
+    return record;
+  }
+
+  const preferredKeys = [
+    "Account",
+    "account",
+    "Accounts",
+    "accounts",
+    "Data",
+    "data",
+    "Payload",
+    "payload",
+    "Info",
+    "info",
+    "Result",
+    "result",
+    "Details",
+    "details",
+  ];
+
+  for (const key of preferredKeys) {
+    if (key in record) {
+      const candidate = extractAccountRecord(record[key], depth + 1);
+      if (candidate) {
+        return candidate;
+      }
+    }
+  }
+
+  for (const [, value] of entries) {
+    if (typeof value === "object" && value) {
+      const candidate = extractAccountRecord(value, depth + 1);
+      if (candidate) {
+        return candidate;
+      }
+    }
+  }
+
+  return null;
+};
+
+const buildAccountSummaryItems = (source: unknown): SummaryItem[] => {
+  const record = extractAccountRecord(source);
+  if (!record) {
+    return [];
+  }
+
+  return Object.entries(record)
+    .filter(([key]) => !["ok", "msg"].includes(key))
+    .map(([key, value]) => {
+      const normalizedKey = normalizeAccountKey(key) || key;
+      const display = formatAccountValue(value);
+      const copyValue =
+        typeof value === "string" && value.trim()
+          ? value
+          : typeof value === "number" && Number.isFinite(value)
+            ? String(value)
+            : null;
+
+      return {
+        key: `account-${normalizedKey}`,
+        label: resolveAccountLabel(key) || key,
+        value: display,
+        copyValue,
+      };
+    })
+    .filter((item) => item.value && item.value !== "—");
+};
+
 const buildSummaryItems = (order: OrderInfo | null, card: CardInfo | null): SummaryItem[] => {
   const teamId = formatTeamId(order);
 
@@ -672,25 +893,58 @@ const submitBizOne = async () => {
 const bizTwo = reactive({
   code: "",
   submitting: false,
-  response: null as null | { login_email: string; login_url: string },
+  response: null as BizTwoResponse | null,
 });
 
 const bizTwoNormalized = computed(() => normalizeCode(bizTwo.code));
 const bizTwoValid = computed(() => isValidCode(bizTwoNormalized.value));
 
-const submitBizTwo = () => {
+const bizTwoSummaryItems = computed<SummaryItem[]>(() => {
+  if (!bizTwo.response || !bizTwo.response.ok) {
+    return [];
+  }
+  return bizTwo.response.items;
+});
+
+const submitBizTwo = async () => {
   if (!bizTwoValid.value || bizTwo.submitting) {
     return;
   }
+
+  bizTwo.code = bizTwoNormalized.value;
   bizTwo.submitting = true;
   bizTwo.response = null;
-  window.setTimeout(() => {
+
+  try {
+    const response = await requestCard({
+      msgoogle: "GetPlusApi",
+      data: { Card: bizTwoNormalized.value },
+    });
+
+    const ok = response?.ok === true;
+    const message = typeof response?.msg === "string" && response.msg.trim()
+      ? response.msg
+      : ok
+        ? "领取成功"
+        : "领取失败";
+
+    const items = buildAccountSummaryItems(response?.data ?? null);
+
+    bizTwo.response = { ok, message, items };
+
+    if (ok) {
+      toast.success(message);
+    } else {
+      toast.error(message);
+    }
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "领取失败，请稍后再试。";
+    bizTwo.response = { ok: false, message, items: [] };
+    toast.error(message);
+  } finally {
     bizTwo.submitting = false;
-    bizTwo.response = {
-      login_email: "user@example.com",
-      login_url: "https://mail.example.com",
-    };
-  }, 400);
+  }
 };
 
 const bizThree = reactive({
