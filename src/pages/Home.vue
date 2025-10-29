@@ -97,12 +97,6 @@
                   autocomplete="off"
                   maxlength="19"
                 />
-                <p class="text-xs" :class="bizTwoValid ? 'text-emerald-600' : 'text-muted-foreground'">
-                  规范化：{{ bizTwoNormalized || '（等待输入）' }}
-                </p>
-                <p v-if="bizTwoNormalized && !bizTwoValid" class="text-xs text-destructive">
-                  格式应为 4-4-4-4（仅大写字母/数字）
-                </p>
                 <Button class="w-full md:w-auto" :disabled="!bizTwoValid || bizTwo.submitting" @click="submitBizTwo">
                   {{ bizTwo.submitting ? '处理中…' : '领取账号' }}
                 </Button>
@@ -172,12 +166,6 @@
                     autocomplete="off"
                     maxlength="19"
                   />
-                  <p class="text-xs" :class="bizThreeCodeValid ? 'text-emerald-600' : 'text-muted-foreground'">
-                    规范化：{{ bizThreeNormalized || '（等待输入）' }}
-                  </p>
-                  <p v-if="bizThreeNormalized && !bizThreeCodeValid" class="text-xs text-destructive">
-                    格式应为 4-4-4-4（仅大写字母/数字）
-                  </p>
                 </div>
                 <div class="space-y-2 md:col-span-2">
                   <label class="text-sm font-medium text-muted-foreground" for="b3-json">JSON 数据</label>
@@ -222,12 +210,6 @@
                   autocomplete="off"
                   maxlength="19"
                 />
-                <p class="text-xs" :class="bizFourValid ? 'text-emerald-600' : 'text-muted-foreground'">
-                  规范化：{{ bizFourNormalized || '（等待输入）' }}
-                </p>
-                <p v-if="bizFourNormalized && !bizFourValid" class="text-xs text-destructive">
-                  格式应为 4-4-4-4（仅大写字母/数字）
-                </p>
                 <Button class="w-full md:w-auto" :disabled="!bizFourValid || bizFour.loading" @click="submitBizFour">
                   {{ bizFour.loading ? '查询中…' : '查询' }}
                 </Button>
@@ -282,10 +264,6 @@
           </div>
         </CardContent>
       </Card>
-
-      <footer class="text-center text-[11px] text-muted-foreground">
-        构建版本：{{ buildMeta.commit }}<span v-if="buildMeta.formattedTime"> · {{ buildMeta.formattedTime }}</span>
-      </footer>
     </div>
   </main>
 </template>
