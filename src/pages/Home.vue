@@ -9,7 +9,7 @@
       <Card class="border border-border/70 bg-card shadow-sm">
         <CardContent class="p-0">
           <div class="border-b border-border/60 bg-muted/30 px-4 py-3">
-            <div class="grid gap-2 sm:grid-cols-2 md:grid-cols-4">
+            <div class="grid grid-cols-2 gap-2 sm:grid-cols-4">
               <button
                 v-for="item in tabs"
                 :key="item.value"
