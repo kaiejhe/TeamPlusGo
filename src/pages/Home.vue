@@ -30,8 +30,8 @@
           <div class="space-y-8 px-6 py-6">
             <section v-if="activeTab === 'B1'" class="space-y-6">
               <header class="space-y-1">
-                <h2 class="text-lg font-semibold text-foreground">Business(Team) 绑定邮箱自动发送进团邀请</h2>
-                <p class="text-sm text-muted-foreground">输入兑换码与邮箱，确认后系统会尝试发送团队邀请。</p>
+                <h2 class="text-lg font-semibold text-foreground">Business(Team) 自助进团</h2>
+                <p class="text-sm text-muted-foreground">Business(Team) 24小时自助进团</p>
               </header>
 
               <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -44,12 +44,6 @@
                     autocomplete="off"
                     maxlength="19"
                   />
-                  <p class="text-xs" :class="bizOneCodeValid ? 'text-emerald-600' : 'text-muted-foreground'">
-                    规范化：{{ bizOneNormalized || '（等待输入）' }}
-                  </p>
-                  <p v-if="bizOneNormalized && !bizOneCodeValid" class="text-xs text-destructive">
-                    格式应为 4-4-4-4（仅大写字母/数字）
-                  </p>
                 </div>
                 <div class="space-y-2">
                   <label class="text-sm font-medium text-muted-foreground" for="b1-email">接收邮箱</label>
