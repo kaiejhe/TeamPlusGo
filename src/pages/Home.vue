@@ -2,7 +2,7 @@
   <main class="min-h-[100dvh] bg-muted/40 px-4 py-10">
     <div class="mx-auto w-full max-w-4xl space-y-6">
       <header class="space-y-2 text-center">
-        <h1 class="text-2xl font-semibold tracking-tight text-foreground">兑换码业务 · 前端 UI</h1>
+        <h1 class="text-2xl font-semibold tracking-tight text-foreground">Plus Tesm自助兑换订阅</h1>
         <p class="text-sm text-muted-foreground">兑换码为 19 位：xxxx-xxxx-xxxx-xxxx</p>
       </header>
 
