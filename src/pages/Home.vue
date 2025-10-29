@@ -74,19 +74,33 @@
 
               <div
                 v-if="bizOne.response && bizOne.response.ok"
-                class="space-y-4 rounded-lg border border-border/70 bg-muted/40 p-4 text-sm"
+                class="space-y-4 rounded-xl border border-border/70 bg-background/90 p-4 text-sm shadow-sm"
               >
                 <div class="flex flex-wrap items-center gap-2">
-                  <Badge>创建成功</Badge>
-                  <span class="text-muted-foreground">{{ bizOne.response.message }}</span>
+                  <Badge v-if="bizOneUsageStatus" :variant="usageStatusMeta[bizOneUsageStatus].badgeVariant">
+                    {{ usageStatusMeta[bizOneUsageStatus].label }}
+                  </Badge>
+                  <Badge v-if="bizOneOrderStatus" :variant="bizOneOrderStatus.variant">
+                    邀请状态 · {{ bizOneOrderStatus.label }}
+                  </Badge>
                 </div>
+                <p v-if="bizOne.response.message" class="text-xs text-muted-foreground">
+                  {{ bizOne.response.message }}
+                </p>
 
-                <div v-if="bizOneSummaryItems.length" class="grid gap-3 sm:grid-cols-2">
-                  <div v-for="item in bizOneSummaryItems" :key="item.label" class="space-y-1">
-                    <p class="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                <div
+                  v-if="bizOneSummaryItems.length"
+                  class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3"
+                >
+                  <div
+                    v-for="item in bizOneSummaryItems"
+                    :key="item.label"
+                    class="rounded-lg border border-border/60 bg-muted/30 p-3"
+                  >
+                    <p class="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
                       {{ item.label }}
                     </p>
-                    <p class="font-medium text-foreground">{{ item.value }}</p>
+                    <p class="mt-1 font-semibold text-foreground">{{ item.value }}</p>
                   </div>
                 </div>
               </div>
@@ -211,42 +225,33 @@
 
               <div
                 v-if="bizFour.result && bizFour.result.ok"
-                class="space-y-4 rounded-lg border border-border/70 bg-muted/40 p-4 text-sm"
+                class="space-y-4 rounded-xl border border-border/70 bg-background/90 p-4 text-sm shadow-sm"
               >
                 <div class="flex flex-wrap items-center gap-2">
-                  <Badge>验证成功</Badge>
                   <Badge :variant="usageStatusMeta[bizFour.result.status].badgeVariant">
                     {{ usageStatusMeta[bizFour.result.status].label }}
                   </Badge>
-                  <span class="text-muted-foreground">{{ bizFour.result.message }}</span>
+                  <Badge v-if="bizFour.result.orderStatus" :variant="bizFour.result.orderStatus.variant">
+                    邀请状态 · {{ bizFour.result.orderStatus.label }}
+                  </Badge>
                 </div>
+                <p v-if="bizFour.result.message" class="text-xs text-muted-foreground">
+                  {{ bizFour.result.message }}
+                </p>
 
-                <div v-if="bizFourCardItems.length" class="space-y-3">
-                  <p class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">卡密信息</p>
-                  <div class="grid gap-3 sm:grid-cols-2">
-                    <div v-for="item in bizFourCardItems" :key="item.label" class="space-y-1">
-                      <p class="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-                        {{ item.label }}
-                      </p>
-                      <p class="font-medium text-foreground">{{ item.value }}</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div v-if="bizFourOrderItems.length" class="space-y-3">
-                  <div class="flex flex-wrap items-center gap-2">
-                    <p class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">订单信息</p>
-                    <Badge v-if="bizFour.result.orderStatus" :variant="bizFour.result.orderStatus.variant">
-                      {{ bizFour.result.orderStatus.label }}
-                    </Badge>
-                  </div>
-                  <div class="grid gap-3 sm:grid-cols-2">
-                    <div v-for="item in bizFourOrderItems" :key="item.label" class="space-y-1">
-                      <p class="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-                        {{ item.label }}
-                      </p>
-                      <p class="font-medium text-foreground">{{ item.value }}</p>
-                    </div>
+                <div
+                  v-if="bizFourSummaryItems.length"
+                  class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3"
+                >
+                  <div
+                    v-for="item in bizFourSummaryItems"
+                    :key="item.label"
+                    class="rounded-lg border border-border/60 bg-muted/30 p-3"
+                  >
+                    <p class="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                      {{ item.label }}
+                    </p>
+                    <p class="mt-1 font-semibold text-foreground">{{ item.value }}</p>
                   </div>
                 </div>
               </div>
@@ -458,10 +463,24 @@ const bizOneCodeValid = computed(() => isValidCode(bizOneNormalized.value));
 const bizOneEmailValid = computed(() => /.+@.+\..+/.test(bizOne.email.trim()));
 
 const bizOneSummaryItems = computed(() => {
-  if (!bizOne.response) {
+  if (!bizOne.response || !bizOne.response.ok) {
     return [] as Array<{ label: string; value: string }>;
   }
   return buildSummaryItems(bizOne.response.order, bizOne.response.card);
+});
+
+const bizOneUsageStatus = computed<UsageStatus | null>(() => {
+  if (!bizOne.response || !bizOne.response.ok) {
+    return null;
+  }
+  return deriveUsageStatus(bizOne.response.card, bizOne.response.order);
+});
+
+const bizOneOrderStatus = computed(() => {
+  if (!bizOne.response || !bizOne.response.ok) {
+    return null;
+  }
+  return resolveOrderStatus(bizOne.response.order);
 });
 
 const submitBizOne = async () => {
@@ -571,28 +590,11 @@ const bizFour = reactive({
 const bizFourNormalized = computed(() => normalizeCode(bizFour.code));
 const bizFourValid = computed(() => isValidCode(bizFourNormalized.value));
 
-const bizFourCardItems = computed(() => {
-  if (!bizFour.result) return [] as Array<{ label: string; value: string }>;
-  const card = bizFour.result.card;
-  const order = bizFour.result.order;
-
-  return [
-    { label: "卡密状态", value: formatCardStateLabel(card, order) },
-    { label: "卡密类型", value: formatCardType(card, order) },
-  ];
-});
-
-const bizFourOrderItems = computed(() => {
-  if (!bizFour.result?.order) return [] as Array<{ label: string; value: string }>;
-  const order = bizFour.result.order;
-  const items: Array<{ label: string; value: string }> = [];
-
-  items.push({ label: "团队编号", value: order.OrderTeamID ?? "—" });
-  items.push({ label: "绑定邮箱", value: order.Order_us_Email ?? "—" });
-  items.push({ label: "邀请状态", value: formatInviteStatusLabel(order) });
-  items.push({ label: "创建时间", value: formatTimestamp(order.AddTime) });
-
-  return items;
+const bizFourSummaryItems = computed(() => {
+  if (!bizFour.result || !bizFour.result.ok) {
+    return [] as Array<{ label: string; value: string }>;
+  }
+  return buildSummaryItems(bizFour.result.order, bizFour.result.card);
 });
 
 const buildMeta = computed(() => {
