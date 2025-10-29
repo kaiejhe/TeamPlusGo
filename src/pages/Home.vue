@@ -84,23 +84,35 @@
                     邀请状态 · {{ bizOneOrderStatus.label }}
                   </Badge>
                 </div>
-                <p v-if="bizOne.response.message" class="text-xs text-muted-foreground">
-                  {{ bizOne.response.message }}
-                </p>
 
-                <div
-                  v-if="bizOneSummaryItems.length"
-                  class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3"
-                >
-                  <div
-                    v-for="item in bizOneSummaryItems"
-                    :key="item.label"
-                    class="rounded-lg border border-border/60 bg-muted/30 p-3"
-                  >
-                    <p class="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-                      {{ item.label }}
-                    </p>
-                    <p class="mt-1 font-semibold text-foreground">{{ item.value }}</p>
+                <div v-if="bizOneSummaryItems.length" class="space-y-3">
+                  <div class="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                    <CreditCard class="h-4 w-4" />
+                    <span>卡密详情</span>
+                  </div>
+                  <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    <div
+                      v-for="item in bizOneSummaryItems"
+                      :key="item.key"
+                      class="rounded-lg border border-border/60 bg-muted/30 p-3"
+                    >
+                      <p class="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                        {{ item.label }}
+                      </p>
+                      <div class="mt-1 flex items-center gap-2">
+                        <span class="font-semibold text-foreground">{{ item.value }}</span>
+                        <Button
+                          v-if="item.copyValue"
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          class="h-7 w-7"
+                          @click="copyText(item.copyValue)"
+                        >
+                          <Copy class="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -235,23 +247,35 @@
                     邀请状态 · {{ bizFour.result.orderStatus.label }}
                   </Badge>
                 </div>
-                <p v-if="bizFour.result.message" class="text-xs text-muted-foreground">
-                  {{ bizFour.result.message }}
-                </p>
 
-                <div
-                  v-if="bizFourSummaryItems.length"
-                  class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3"
-                >
-                  <div
-                    v-for="item in bizFourSummaryItems"
-                    :key="item.label"
-                    class="rounded-lg border border-border/60 bg-muted/30 p-3"
-                  >
-                    <p class="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-                      {{ item.label }}
-                    </p>
-                    <p class="mt-1 font-semibold text-foreground">{{ item.value }}</p>
+                <div v-if="bizFourSummaryItems.length" class="space-y-3">
+                  <div class="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                    <CreditCard class="h-4 w-4" />
+                    <span>卡密详情</span>
+                  </div>
+                  <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    <div
+                      v-for="item in bizFourSummaryItems"
+                      :key="item.key"
+                      class="rounded-lg border border-border/60 bg-muted/30 p-3"
+                    >
+                      <p class="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                        {{ item.label }}
+                      </p>
+                      <div class="mt-1 flex items-center gap-2">
+                        <span class="font-semibold text-foreground">{{ item.value }}</span>
+                        <Button
+                          v-if="item.copyValue"
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          class="h-7 w-7"
+                          @click="copyText(item.copyValue)"
+                        >
+                          <Copy class="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -275,6 +299,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/components/ui/toast";
+import { CreditCard, Copy } from "lucide-vue-next";
 import { Card as requestCard } from "@/apijs/uts";
 
 const tabs = [
@@ -350,6 +375,13 @@ type BizFourResult = {
   order: OrderInfo | null;
   status: UsageStatus;
   orderStatus: OrderStatusMeta | null;
+};
+
+type SummaryItem = {
+  key: string;
+  label: string;
+  value: string;
+  copyValue?: string | null;
 };
 
 const usageStatusMeta: Record<UsageStatus, { label: string; badgeVariant: "default" | "secondary" | "destructive" }> = {
@@ -435,20 +467,59 @@ const formatInviteStatusLabel = (order: OrderInfo | null) => {
   return meta ? meta.label : order.TeamOrderState;
 };
 
+const maskIdentifier = (value: string) => {
+  if (!value) {
+    return "—";
+  }
+
+  const compact = value.replace(/\s+/g, "");
+  if (compact.length <= 12) {
+    return value;
+  }
+
+  const start = compact.slice(0, 4);
+  const end = compact.slice(-4);
+  return `${start}········${end}`;
+};
+
+const formatTeamId = (order: OrderInfo | null): { display: string; raw: string | null } => {
+  const raw = (order?.OrderTeamID ?? "").toString().trim();
+  if (!raw) {
+    return { display: "—", raw: null };
+  }
+  return { display: maskIdentifier(raw), raw };
+};
+
 const formatCardType = (card: CardInfo | null, order: OrderInfo | null) => {
   const raw = (card?.TeamType ?? order?.TeamType ?? "").toString().trim();
   return raw || "—";
 };
 
-const buildSummaryItems = (order: OrderInfo | null, card: CardInfo | null) => {
+const buildSummaryItems = (order: OrderInfo | null, card: CardInfo | null): SummaryItem[] => {
+  const teamId = formatTeamId(order);
+
   return [
-    { label: "卡密状态", value: formatCardStateLabel(card, order) },
-    { label: "卡密类型", value: formatCardType(card, order) },
-    { label: "团队编号", value: order?.OrderTeamID ?? "—" },
-    { label: "绑定邮箱", value: order?.Order_us_Email ?? "—" },
-    { label: "邀请状态", value: formatInviteStatusLabel(order) },
-    { label: "创建时间", value: formatTimestamp(order?.AddTime ?? card?.AddTime) },
+    { key: "status", label: "卡密状态", value: formatCardStateLabel(card, order) },
+    { key: "type", label: "卡密类型", value: formatCardType(card, order) },
+    { key: "teamId", label: "团队编号", value: teamId.display, copyValue: teamId.raw },
+    { key: "email", label: "绑定邮箱", value: order?.Order_us_Email ?? "—" },
+    { key: "invite", label: "邀请状态", value: formatInviteStatusLabel(order) },
+    { key: "createdAt", label: "创建时间", value: formatTimestamp(order?.AddTime ?? card?.AddTime) },
   ];
+};
+
+const copyText = async (value: string | null | undefined) => {
+  if (!value || typeof navigator === "undefined" || !navigator.clipboard) {
+    return;
+  }
+
+  try {
+    await navigator.clipboard.writeText(value);
+    toast.success("已复制到剪贴板");
+  } catch (error) {
+    console.error(error);
+    toast.error("复制失败，请手动复制");
+  }
 };
 
 const bizOne = reactive({
@@ -462,9 +533,9 @@ const bizOneNormalized = computed(() => normalizeCode(bizOne.code));
 const bizOneCodeValid = computed(() => isValidCode(bizOneNormalized.value));
 const bizOneEmailValid = computed(() => /.+@.+\..+/.test(bizOne.email.trim()));
 
-const bizOneSummaryItems = computed(() => {
+const bizOneSummaryItems = computed<SummaryItem[]>(() => {
   if (!bizOne.response || !bizOne.response.ok) {
-    return [] as Array<{ label: string; value: string }>;
+    return [];
   }
   return buildSummaryItems(bizOne.response.order, bizOne.response.card);
 });
@@ -507,7 +578,23 @@ const submitBizOne = async () => {
       : ok
         ? "订单创建成功"
         : "订单创建失败";
-    const { card, order } = normalizeEntities(response?.data ?? null);
+    let { card, order } = normalizeEntities(response?.data ?? null);
+
+    if (ok) {
+      try {
+        const followUp = await requestCard({
+          msgoogle: "TeamCard",
+          data: { Card: bizOneNormalized.value },
+        });
+        if (followUp?.ok === true) {
+          const normalized = normalizeEntities(followUp?.data ?? null);
+          card = normalized.card ?? card;
+          order = normalized.order ?? order;
+        }
+      } catch (error) {
+        console.error("TeamCard follow-up failed", error);
+      }
+    }
 
     bizOne.response = { ok, message, card, order };
 
@@ -590,9 +677,9 @@ const bizFour = reactive({
 const bizFourNormalized = computed(() => normalizeCode(bizFour.code));
 const bizFourValid = computed(() => isValidCode(bizFourNormalized.value));
 
-const bizFourSummaryItems = computed(() => {
+const bizFourSummaryItems = computed<SummaryItem[]>(() => {
   if (!bizFour.result || !bizFour.result.ok) {
-    return [] as Array<{ label: string; value: string }>;
+    return [];
   }
   return buildSummaryItems(bizFour.result.order, bizFour.result.card);
 });
