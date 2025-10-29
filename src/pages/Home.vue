@@ -424,13 +424,66 @@ const resolveOrderStatus = (order: OrderInfo | null): OrderStatusMeta | null => 
   return ORDER_STATUS_META[key] ?? { label: order.TeamOrderState, variant: "outline" };
 };
 
+const looksLikeCard = (value: unknown): value is CardInfo => {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+  const record = value as Record<string, unknown>;
+  return (
+    "TeamCard" in record ||
+    "TeamCardState" in record ||
+    "TeamType" in record
+  );
+};
+
+const looksLikeOrder = (value: unknown): value is OrderInfo => {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+  const record = value as Record<string, unknown>;
+  return (
+    "OrderTeamID" in record ||
+    "Order_us_Email" in record ||
+    "TeamOrderState" in record
+  );
+};
+
 const normalizeEntities = (data: unknown): { card: CardInfo | null; order: OrderInfo | null } => {
   if (!data || typeof data !== "object") {
     return { card: null, order: null };
   }
   const record = data as Record<string, unknown>;
-  const card = (record.Card ?? record.card ?? null) as CardInfo | null;
-  const order = (record.Order ?? record.order ?? null) as OrderInfo | null;
+
+  const rawCard = record.Card ?? record.card ?? null;
+  let card = looksLikeCard(rawCard) ? (rawCard as CardInfo) : null;
+
+  const rawOrder = record.Order ?? record.order ?? null;
+  let order = looksLikeOrder(rawOrder) ? (rawOrder as OrderInfo) : null;
+
+  if (!card && looksLikeCard(record)) {
+    card = record as CardInfo;
+  }
+
+  if (!order && looksLikeOrder(record)) {
+    order = record as OrderInfo;
+  }
+
+  const nested = (record.data ?? record.Data) as unknown;
+  if (nested && nested !== record) {
+    if (!card && looksLikeCard(nested)) {
+      card = nested as CardInfo;
+    }
+    if (!order && looksLikeOrder(nested)) {
+      order = nested as OrderInfo;
+    }
+
+    if ((!card || !order) && typeof nested === "object") {
+      const normalized = normalizeEntities(nested);
+      card = card ?? normalized.card;
+      order = order ?? normalized.order;
+    }
+  }
+
   return { card, order };
 };
 
