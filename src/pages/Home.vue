@@ -359,6 +359,12 @@ const ORDER_STATUS_META: Record<string, OrderStatusMeta> = {
   o3: { label: "发送失败", variant: "destructive" },
 };
 
+const CARD_STATE_LABELS: Record<string, string> = {
+  o1: "未使用",
+  o2: "已使用",
+  o3: "已锁定",
+};
+
 const deriveUsageStatus = (card: CardInfo | null, order: OrderInfo | null): UsageStatus => {
   const code = String(order?.TeamOrderState ?? card?.TeamCardState ?? "").toLowerCase();
 
@@ -399,44 +405,45 @@ const formatTimestamp = (value: unknown) => {
   return new Date(timestamp).toLocaleString("zh-CN", { hour12: false });
 };
 
-const formatAfterSales = (value: unknown) => {
-  if (typeof value !== "number" || value <= 0) {
+const formatCardStateLabel = (card: CardInfo | null, order: OrderInfo | null) => {
+  const raw = String(
+    order?.TeamCardState ?? card?.TeamCardState ?? order?.TeamOrderState ?? "",
+  ).trim();
+
+  if (raw) {
+    const normalized = raw.toLowerCase();
+    if (CARD_STATE_LABELS[normalized]) {
+      return CARD_STATE_LABELS[normalized];
+    }
+  }
+
+  const usage = deriveUsageStatus(card, order);
+  return usageStatusMeta[usage].label;
+};
+
+const formatInviteStatusLabel = (order: OrderInfo | null) => {
+  if (!order?.TeamOrderState) {
     return "—";
   }
-  return `${value} 天`;
+  const key = order.TeamOrderState.toLowerCase();
+  const meta = ORDER_STATUS_META[key];
+  return meta ? meta.label : order.TeamOrderState;
+};
+
+const formatCardType = (card: CardInfo | null, order: OrderInfo | null) => {
+  const raw = (card?.TeamType ?? order?.TeamType ?? "").toString().trim();
+  return raw || "—";
 };
 
 const buildSummaryItems = (order: OrderInfo | null, card: CardInfo | null) => {
-  const items: Array<{ label: string; value: string }> = [];
-
-  const displayCard = card?.TeamCard ?? order?.TeamCard;
-  if (displayCard) {
-    items.push({ label: "兑换码", value: displayCard });
-  }
-
-  if (order?.Order_us_Email) {
-    items.push({ label: "绑定邮箱", value: order.Order_us_Email });
-  }
-
-  const teamId = order?.OrderTeamID ?? order?.TeamCard;
-  if (teamId) {
-    items.push({ label: "团队编号", value: teamId });
-  }
-
-  const afterSales = order?.AfterSales ?? card?.AfterSales;
-  items.push({ label: "售后时长", value: formatAfterSales(afterSales) });
-
-  const createdAt = order?.AddTime ?? card?.AddTime;
-  if (createdAt) {
-    items.push({ label: "创建时间", value: formatTimestamp(createdAt) });
-  }
-
-  const updatedAt = order?.UpdTime ?? card?.UpdTime;
-  if (updatedAt) {
-    items.push({ label: "更新时间", value: formatTimestamp(updatedAt) });
-  }
-
-  return items;
+  return [
+    { label: "卡密状态", value: formatCardStateLabel(card, order) },
+    { label: "卡密类型", value: formatCardType(card, order) },
+    { label: "团队编号", value: order?.OrderTeamID ?? "—" },
+    { label: "绑定邮箱", value: order?.Order_us_Email ?? "—" },
+    { label: "邀请状态", value: formatInviteStatusLabel(order) },
+    { label: "创建时间", value: formatTimestamp(order?.AddTime ?? card?.AddTime) },
+  ];
 };
 
 const bizOne = reactive({
@@ -568,34 +575,11 @@ const bizFourCardItems = computed(() => {
   if (!bizFour.result) return [] as Array<{ label: string; value: string }>;
   const card = bizFour.result.card;
   const order = bizFour.result.order;
-  const items: Array<{ label: string; value: string }> = [];
 
-  if (card?.TeamCard) {
-    items.push({ label: "兑换码", value: card.TeamCard });
-  }
-
-  if (card?.TeamType) {
-    items.push({ label: "卡密类型", value: card.TeamType });
-  }
-
-  if (card?.TeamCardState) {
-    items.push({ label: "卡密状态", value: card.TeamCardState });
-  }
-
-  if (card?.AfterSales !== undefined || order?.AfterSales !== undefined) {
-    const afterSales = card?.AfterSales ?? order?.AfterSales;
-    items.push({ label: "售后时长", value: formatAfterSales(afterSales) });
-  }
-
-  if (card?.AddTime) {
-    items.push({ label: "创建时间", value: formatTimestamp(card.AddTime) });
-  }
-
-  if (card?.UpdTime) {
-    items.push({ label: "更新时间", value: formatTimestamp(card.UpdTime) });
-  }
-
-  return items;
+  return [
+    { label: "卡密状态", value: formatCardStateLabel(card, order) },
+    { label: "卡密类型", value: formatCardType(card, order) },
+  ];
 });
 
 const bizFourOrderItems = computed(() => {
@@ -603,29 +587,10 @@ const bizFourOrderItems = computed(() => {
   const order = bizFour.result.order;
   const items: Array<{ label: string; value: string }> = [];
 
-  if (order.TeamCard) {
-    items.push({ label: "关联卡密", value: order.TeamCard });
-  }
-
-  if (order.Order_us_Email) {
-    items.push({ label: "绑定邮箱", value: order.Order_us_Email });
-  }
-
-  if (order.OrderTeamID) {
-    items.push({ label: "团队编号", value: order.OrderTeamID });
-  }
-
-  if (order.AfterSales !== undefined) {
-    items.push({ label: "售后时长", value: formatAfterSales(order.AfterSales) });
-  }
-
-  if (order.AddTime) {
-    items.push({ label: "创建时间", value: formatTimestamp(order.AddTime) });
-  }
-
-  if (order.UpdTime) {
-    items.push({ label: "更新时间", value: formatTimestamp(order.UpdTime) });
-  }
+  items.push({ label: "团队编号", value: order.OrderTeamID ?? "—" });
+  items.push({ label: "绑定邮箱", value: order.Order_us_Email ?? "—" });
+  items.push({ label: "邀请状态", value: formatInviteStatusLabel(order) });
+  items.push({ label: "创建时间", value: formatTimestamp(order.AddTime) });
 
   return items;
 });
