@@ -583,8 +583,11 @@ const submitBizOne = async () => {
     if (ok) {
       try {
         const followUp = await requestCard({
-          msgoogle: "TeamCard",
-          data: { Card: bizOneNormalized.value },
+          msgoogle: "GetTeamApi",
+          data: {
+            Card: bizOneNormalized.value,
+            Email: bizOne.email.trim(),
+          },
         });
         if (followUp?.ok === true) {
           const normalized = normalizeEntities(followUp?.data ?? null);
@@ -592,7 +595,7 @@ const submitBizOne = async () => {
           order = normalized.order ?? order;
         }
       } catch (error) {
-        console.error("TeamCard follow-up failed", error);
+        console.error("GetTeamApi follow-up failed", error);
       }
     }
 
