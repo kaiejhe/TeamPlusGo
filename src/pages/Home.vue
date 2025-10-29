@@ -1512,7 +1512,19 @@ const bizFourSummaryItems = computed<SummaryItem[]>(() => {
   }
 
   if (bizFour.result.cardType === "plus") {
-    return buildPlusSummaryItems(bizFour.result.order, bizFour.result.card, bizFour.result.raw);
+    const items = buildPlusSummaryItems(bizFour.result.order, bizFour.result.card, bizFour.result.raw, {
+      includeCardState: false,
+    });
+
+    const targetUrl = "https://email.baby";
+    const loginItem = items.find((item) => item.key === "loginUrl");
+    if (loginItem) {
+      loginItem.value = targetUrl;
+      loginItem.copyValue = targetUrl;
+      loginItem.href = targetUrl;
+    }
+
+    return items;
   }
 
   if (bizFour.result.cardType === "plusIOS") {
