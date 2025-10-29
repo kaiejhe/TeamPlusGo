@@ -74,45 +74,15 @@
 
               <div
                 v-if="bizOne.response && bizOne.response.ok"
-                class="space-y-4 rounded-xl border border-border/70 bg-background/90 p-4 text-sm shadow-sm"
+                class="rounded-xl border border-border/70 bg-background/90 p-4 text-sm shadow-sm"
               >
-                <div class="flex flex-wrap items-center gap-2">
-                  <Badge v-if="bizOneUsageStatus" :variant="usageStatusMeta[bizOneUsageStatus].badgeVariant">
-                    {{ usageStatusMeta[bizOneUsageStatus].label }}
-                  </Badge>
-                  <Badge v-if="bizOneOrderStatus" :variant="bizOneOrderStatus.variant">
-                    邀请状态 · {{ bizOneOrderStatus.label }}
-                  </Badge>
-                </div>
-
-                <div v-if="bizOneSummaryItems.length" class="space-y-3">
-                  <div class="flex items-center gap-2 text-xs font-medium text-muted-foreground">
-                    <CreditCard class="h-4 w-4" />
-                    <span>卡密详情</span>
-                  </div>
-                  <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    <div
-                      v-for="item in bizOneSummaryItems"
-                      :key="item.key"
-                      class="rounded-lg border border-border/60 bg-muted/30 p-3"
-                    >
-                      <p class="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-                        {{ item.label }}
-                      </p>
-                      <div class="mt-1 flex items-center gap-2">
-                        <span class="font-semibold text-foreground">{{ item.value }}</span>
-                        <Button
-                          v-if="item.copyValue"
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          class="h-7 w-7"
-                          @click="copyText(item.copyValue)"
-                        >
-                          <Copy class="h-3.5 w-3.5" />
-                        </Button>
-                      </div>
-                    </div>
+                <div class="flex items-start gap-3">
+                  <MailCheck class="mt-0.5 h-5 w-5 text-primary" />
+                  <div class="space-y-1">
+                    <p class="font-medium text-foreground">{{ bizOne.response.message }}</p>
+                    <p class="text-xs text-muted-foreground">
+                      若未在邮箱中看到邀请邮件，可稍后通过“兑换码查询”查看处理状态。
+                    </p>
                   </div>
                 </div>
               </div>
@@ -333,7 +303,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/components/ui/toast";
-import { CreditCard, Copy, User } from "lucide-vue-next";
+import { CreditCard, Copy, MailCheck, User } from "lucide-vue-next";
 import { Card as requestCard } from "@/apijs/uts";
 
 const tabs = [
@@ -914,27 +884,6 @@ const bizOneNormalized = computed(() => normalizeCode(bizOne.code));
 const bizOneCodeValid = computed(() => isValidCode(bizOneNormalized.value));
 const bizOneEmailValid = computed(() => /.+@.+\..+/.test(bizOne.email.trim()));
 
-const bizOneSummaryItems = computed<SummaryItem[]>(() => {
-  if (!bizOne.response || !bizOne.response.ok) {
-    return [];
-  }
-  return buildSummaryItems(bizOne.response.order, bizOne.response.card);
-});
-
-const bizOneUsageStatus = computed<UsageStatus | null>(() => {
-  if (!bizOne.response || !bizOne.response.ok) {
-    return null;
-  }
-  return deriveUsageStatus(bizOne.response.card, bizOne.response.order);
-});
-
-const bizOneOrderStatus = computed(() => {
-  if (!bizOne.response || !bizOne.response.ok) {
-    return null;
-  }
-  return resolveOrderStatus(bizOne.response.order);
-});
-
 const submitBizOne = async () => {
   if (!bizOneCodeValid.value || !bizOneEmailValid.value || bizOne.submitting) {
     return;
@@ -954,7 +903,7 @@ const submitBizOne = async () => {
     });
 
     const ok = response?.ok === true;
-    const message = typeof response?.msg === "string" && response.msg.trim()
+    let message = typeof response?.msg === "string" && response.msg.trim()
       ? response.msg
       : ok
         ? "订单创建成功"
@@ -974,6 +923,7 @@ const submitBizOne = async () => {
           const normalized = normalizeEntities(followUp?.data ?? null);
           card = normalized.card ?? card;
           order = normalized.order ?? order;
+          message = "已发送邀请链接，请注意查收邮件，具体信息可通过兑换码查询";
         }
       } catch (error) {
         console.error("GetTeamApi follow-up failed", error);
