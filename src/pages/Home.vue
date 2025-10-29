@@ -1223,13 +1223,12 @@ const buildPlusSummaryItems = (
     },
   ];
 
-  if (includeReceiveTime) {
-    items.push({
-      key: "receiveTime",
-      label: "领取时间",
-      value: formatTemporalValue(receiveTime),
-    });
-  }
+  items.push({
+    key: "mailboxKey",
+    label: "邮箱密钥",
+    value: formatSensitiveValue(mailboxKey),
+    copyValue: toCopyValue(mailboxKey),
+  });
 
   items.push({
     key: "loginUrl",
@@ -1239,18 +1238,19 @@ const buildPlusSummaryItems = (
     href: resolveExternalUrl(loginAddress),
   });
 
-  items.push({
-    key: "mailboxKey",
-    label: "邮箱密钥",
-    value: formatSensitiveValue(mailboxKey),
-    copyValue: toCopyValue(mailboxKey),
-  });
-
   if (includeCardState) {
     items.push({
       key: "cardState",
       label: "兑换码状态",
       value: formatCardStateLabel(card, order),
+    });
+  }
+
+  if (includeReceiveTime) {
+    items.push({
+      key: "receiveTime",
+      label: "领取时间",
+      value: formatTemporalValue(receiveTime),
     });
   }
 
