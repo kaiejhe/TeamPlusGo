@@ -2,8 +2,8 @@
   <main class="min-h-[100dvh] bg-muted/40 px-4 py-10">
     <div class="mx-auto w-full max-w-4xl space-y-6">
       <header class="space-y-2 text-center">
-        <h1 class="text-2xl font-semibold tracking-tight text-foreground">Plus Tesm自助兑换订阅</h1>
-        <p class="text-sm text-muted-foreground">兑换码为 19 位：xxxx-xxxx-xxxx-xxxx</p>
+        <h1 class="text-2xl font-semibold tracking-tight text-foreground">Plus Team 自助兑换订阅</h1>
+        <p class="text-sm text-muted-foreground">Team自助进团 Plus自助领号 Plus自助订阅</p>
       </header>
 
       <Card class="border border-border/70 bg-card shadow-sm">
