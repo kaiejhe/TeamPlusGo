@@ -244,18 +244,18 @@
                 class="space-y-4 rounded-xl border border-border/70 bg-background/90 p-4 text-sm shadow-sm"
               >
                 <div class="flex flex-wrap items-center gap-2">
-                  <Badge :variant="usageStatusMeta[bizFour.result.status].badgeVariant">
-                    {{ usageStatusMeta[bizFour.result.status].label }}
-                  </Badge>
                   <Badge v-if="bizFour.result.orderStatus" :variant="bizFour.result.orderStatus.variant">
                     邀请状态 · {{ bizFour.result.orderStatus.label }}
                   </Badge>
+                  <span v-if="bizFour.result.message" class="text-xs text-muted-foreground">
+                    {{ bizFour.result.message }}
+                  </span>
                 </div>
 
                 <div v-if="bizFourSummaryItems.length" class="space-y-3">
                   <div class="flex items-center gap-2 text-xs font-medium text-muted-foreground">
                     <CreditCard class="h-4 w-4" />
-                    <span>卡密详情</span>
+                    <span>{{ bizFourDetailTitle }}</span>
                   </div>
                   <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                     <div
@@ -378,13 +378,16 @@ type BizOneResponse = {
   order: OrderInfo | null;
 };
 
+type CardTypeKey = "team" | "plus" | "plusIOS" | "unknown";
+
 type BizFourResult = {
   ok: boolean;
   message: string;
   card: CardInfo | null;
   order: OrderInfo | null;
-  status: UsageStatus;
   orderStatus: OrderStatusMeta | null;
+  cardType: CardTypeKey;
+  raw: unknown;
 };
 
 type SummaryItem = {
@@ -567,6 +570,235 @@ const formatCardType = (card: CardInfo | null, order: OrderInfo | null) => {
   return raw || "—";
 };
 
+const CARD_TYPE_TITLES: Record<CardTypeKey, string> = {
+  team: "Team 兑换码邀请信息",
+  plus: "Plus 兑换码领取信息",
+  plusIOS: "Plus 订阅信息",
+  unknown: "卡密详情",
+};
+
+const NESTED_VALUE_KEYS = [
+  "data",
+  "Data",
+  "payload",
+  "Payload",
+  "result",
+  "Result",
+  "info",
+  "Info",
+  "details",
+  "Details",
+  "extra",
+  "Extra",
+  "content",
+  "Content",
+];
+
+const normalizeLooseKey = (key: string) => key.replace(/[^a-z0-9]/gi, "").toLowerCase();
+
+const ensurePresentValue = (value: unknown): unknown => {
+  if (value === null || value === undefined) {
+    return null;
+  }
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    return trimmed ? value : null;
+  }
+  if (Array.isArray(value)) {
+    return value.length ? value : null;
+  }
+  return value;
+};
+
+const toRecord = (value: unknown): Record<string, unknown> | null => {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return null;
+  }
+  return value as Record<string, unknown>;
+};
+
+const findValueInRecord = (
+  record: Record<string, unknown>,
+  normalizedTargets: string[],
+  depth = 0,
+): unknown => {
+  if (!normalizedTargets.length) {
+    return null;
+  }
+
+  for (const [key, value] of Object.entries(record)) {
+    const normalizedKey = normalizeLooseKey(key);
+    if (normalizedTargets.includes(normalizedKey)) {
+      const ensured = ensurePresentValue(value);
+      if (ensured !== null && ensured !== undefined) {
+        return ensured;
+      }
+    }
+  }
+
+  if (depth >= 4) {
+    return null;
+  }
+
+  for (const containerKey of NESTED_VALUE_KEYS) {
+    if (!(containerKey in record)) {
+      continue;
+    }
+    const candidate = record[containerKey];
+    if (Array.isArray(candidate)) {
+      for (const item of candidate) {
+        const nestedRecord = toRecord(item);
+        if (!nestedRecord) {
+          continue;
+        }
+        const nested = findValueInRecord(nestedRecord, normalizedTargets, depth + 1);
+        if (nested !== null && nested !== undefined) {
+          return nested;
+        }
+      }
+      continue;
+    }
+    const nestedRecord = toRecord(candidate);
+    if (!nestedRecord) {
+      continue;
+    }
+    const nested = findValueInRecord(nestedRecord, normalizedTargets, depth + 1);
+    if (nested !== null && nested !== undefined) {
+      return nested;
+    }
+  }
+
+  for (const value of Object.values(record)) {
+    if (!value || typeof value !== "object") {
+      continue;
+    }
+    if (Array.isArray(value)) {
+      for (const item of value) {
+        const nestedRecord = toRecord(item);
+        if (!nestedRecord) {
+          continue;
+        }
+        const nested = findValueInRecord(nestedRecord, normalizedTargets, depth + 1);
+        if (nested !== null && nested !== undefined) {
+          return nested;
+        }
+      }
+      continue;
+    }
+    const nestedRecord = value as Record<string, unknown>;
+    const nested = findValueInRecord(nestedRecord, normalizedTargets, depth + 1);
+    if (nested !== null && nested !== undefined) {
+      return nested;
+    }
+  }
+
+  return null;
+};
+
+const valueFromSources = (keys: string[], ...sources: unknown[]): unknown => {
+  const normalizedTargets = keys.map((key) => normalizeLooseKey(key)).filter(Boolean);
+  if (!normalizedTargets.length) {
+    return null;
+  }
+
+  for (const source of sources) {
+    const record = toRecord(source);
+    if (!record) {
+      continue;
+    }
+    const found = findValueInRecord(record, normalizedTargets);
+    if (found !== null && found !== undefined) {
+      return found;
+    }
+  }
+
+  return null;
+};
+
+const toCopyValue = (value: unknown): string | null => {
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    return trimmed ? trimmed : null;
+  }
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return String(value);
+  }
+  return null;
+};
+
+const formatTemporalValue = (value: unknown): string => {
+  if (typeof value === "number") {
+    return formatTimestamp(value);
+  }
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (!trimmed) {
+      return "—";
+    }
+    const numeric = Number(trimmed);
+    if (!Number.isNaN(numeric)) {
+      return formatTimestamp(numeric);
+    }
+    const parsed = new Date(trimmed);
+    return Number.isNaN(parsed.getTime())
+      ? trimmed
+      : parsed.toLocaleString("zh-CN", { hour12: false });
+  }
+  return "—";
+};
+
+const resolveCardTypeKey = (
+  card: CardInfo | null,
+  order: OrderInfo | null,
+  raw: unknown,
+): CardTypeKey => {
+  const rawTypeValue = valueFromSources(
+    ["TeamType", "CardType", "Type"],
+    card,
+    order,
+    raw,
+  );
+
+  if (typeof rawTypeValue === "string") {
+    const normalized = rawTypeValue.trim().toLowerCase();
+    if (normalized === "team") {
+      return "team";
+    }
+    if (normalized === "plus") {
+      return "plus";
+    }
+    if (normalized === "plusios" || normalized === "ios" || normalized === "plus_ios") {
+      return "plusIOS";
+    }
+  }
+
+  const hasPlusHints = Boolean(
+    valueFromSources(["PlusEmail", "PlusPassword"], order, raw) ||
+      valueFromSources(["PlusCard", "PlusState"], order, raw) ||
+      valueFromSources(["MailboxKey", "PlusAccToken"], order, raw),
+  );
+  if (hasPlusHints) {
+    return "plus";
+  }
+
+  const hasPlusIosHints = Boolean(
+    valueFromSources(
+      ["SubscribeEmail", "SubscriptionEmail", "PlusIosEmail"],
+      order,
+      raw,
+    ),
+  );
+  if (hasPlusIosHints) {
+    return "plusIOS";
+  }
+
+  if (card?.TeamCard && card.TeamCard.toUpperCase().startsWith("PLUS")) {
+    return "plus";
+  }
+
+  return "team";
+};
+
 const ACCOUNT_LABEL_MAP: Record<string, string> = {
   account: "账号",
   accountemail: "登录邮箱",
@@ -687,6 +919,17 @@ const formatAccountValue = (value: unknown): string => {
     return Number.isNaN(value.getTime()) ? "—" : value.toLocaleString("zh-CN", { hour12: false });
   }
   return JSON.stringify(value);
+};
+
+const formatSensitiveValue = (value: unknown): string => {
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (!trimmed) {
+      return "—";
+    }
+    return maskIdentifier(trimmed);
+  }
+  return formatAccountValue(value);
 };
 
 const extractAccountRecord = (source: unknown, depth = 0): Record<string, unknown> | null => {
@@ -842,8 +1085,9 @@ const buildAccountSummaryItems = (source: unknown): SummaryItem[] => {
   return items;
 };
 
-const buildSummaryItems = (order: OrderInfo | null, card: CardInfo | null): SummaryItem[] => {
+const buildTeamSummaryItems = (order: OrderInfo | null, card: CardInfo | null): SummaryItem[] => {
   const teamId = formatTeamId(order);
+  const email = order?.Order_us_Email ?? order?.PlusEmail ?? null;
 
   return [
     { key: "status", label: "卡密状态", value: formatCardStateLabel(card, order) },
@@ -852,10 +1096,164 @@ const buildSummaryItems = (order: OrderInfo | null, card: CardInfo | null): Summ
     {
       key: "email",
       label: "绑定邮箱",
-      value: order?.Order_us_Email ?? order?.PlusEmail ?? "—",
+      value: email ? email : "—",
+      copyValue: toCopyValue(email),
     },
     { key: "invite", label: "邀请状态", value: formatInviteStatusLabel(order) },
     { key: "createdAt", label: "创建时间", value: formatTimestamp(order?.AddTime ?? card?.AddTime) },
+  ];
+};
+
+const buildPlusSummaryItems = (
+  order: OrderInfo | null,
+  card: CardInfo | null,
+  raw: unknown,
+): SummaryItem[] => {
+  const accountEmail = valueFromSources(
+    [
+      "PlusEmail",
+      "AccountEmail",
+      "LoginEmail",
+      "Email",
+      "email",
+    ],
+    order,
+    raw,
+    card,
+  );
+  const password = valueFromSources(
+    ["PlusPassword", "Password", "Pwd", "passwd", "AccountPassword"],
+    order,
+    raw,
+    card,
+  );
+  const receiveTime =
+    valueFromSources(["ReceiveTime", "ReceiveAt", "AddTime", "UpdTime"], order, raw, card) ??
+    order?.AddTime ??
+    card?.AddTime ??
+    null;
+  const loginAddress = valueFromSources(
+    [
+      "LoginUrl",
+      "LoginURL",
+      "login_url",
+      "EmailUrl",
+      "EmailLogin",
+      "EmailTxt",
+      "EmailTXT",
+    ],
+    order,
+    raw,
+    card,
+  );
+  const mailboxKey = valueFromSources(
+    [
+      "MailboxKey",
+      "Mailbox_key",
+      "MailboxSecret",
+      "EmailKey",
+      "PlusAccToken",
+      "MailboxPwd",
+    ],
+    order,
+    raw,
+    card,
+  );
+
+  return [
+    {
+      key: "plusEmail",
+      label: "帐号(邮箱)",
+      value: formatAccountValue(accountEmail),
+      copyValue: toCopyValue(accountEmail),
+    },
+    {
+      key: "plusPassword",
+      label: "密码",
+      value: formatAccountValue(password),
+      copyValue: toCopyValue(password),
+    },
+    {
+      key: "receiveTime",
+      label: "领取时间",
+      value: formatTemporalValue(receiveTime),
+    },
+    {
+      key: "loginUrl",
+      label: "邮箱登录地址",
+      value: formatAccountValue(loginAddress),
+      copyValue: toCopyValue(loginAddress),
+    },
+    {
+      key: "mailboxKey",
+      label: "邮箱密钥",
+      value: formatSensitiveValue(mailboxKey),
+      copyValue: toCopyValue(mailboxKey),
+    },
+    {
+      key: "cardState",
+      label: "兑换码状态",
+      value: formatCardStateLabel(card, order),
+    },
+  ];
+};
+
+const buildPlusIosSummaryItems = (
+  order: OrderInfo | null,
+  card: CardInfo | null,
+  raw: unknown,
+): SummaryItem[] => {
+  const subscribeEmail = valueFromSources(
+    [
+      "SubscribeEmail",
+      "SubscriptionEmail",
+      "PlusEmail",
+      "Email",
+      "email",
+    ],
+    order,
+    raw,
+    card,
+  );
+  const subscribeState = valueFromSources(
+    ["PlusState", "SubscriptionState", "SubscribeState"],
+    order,
+    raw,
+    card,
+  );
+  const subscribeTime =
+    valueFromSources(["SubscribeTime", "SubscriptionTime", "AddTime", "UpdTime"], order, raw, card) ??
+    order?.AddTime ??
+    card?.AddTime ??
+    null;
+
+  return [
+    {
+      key: "subscribeEmail",
+      label: "订阅邮箱",
+      value: formatAccountValue(subscribeEmail),
+      copyValue: toCopyValue(subscribeEmail),
+    },
+    {
+      key: "cardType",
+      label: "卡密类型",
+      value: formatCardType(card, order),
+    },
+    {
+      key: "subscribeState",
+      label: "订阅状态",
+      value: formatAccountState(subscribeState),
+    },
+    {
+      key: "subscribeTime",
+      label: "订阅时间",
+      value: formatTemporalValue(subscribeTime),
+    },
+    {
+      key: "cardState",
+      label: "兑换码状态",
+      value: formatCardStateLabel(card, order),
+    },
   ];
 };
 
@@ -1048,7 +1446,23 @@ const bizFourSummaryItems = computed<SummaryItem[]>(() => {
   if (!bizFour.result || !bizFour.result.ok) {
     return [];
   }
-  return buildSummaryItems(bizFour.result.order, bizFour.result.card);
+
+  if (bizFour.result.cardType === "plus") {
+    return buildPlusSummaryItems(bizFour.result.order, bizFour.result.card, bizFour.result.raw);
+  }
+
+  if (bizFour.result.cardType === "plusIOS") {
+    return buildPlusIosSummaryItems(bizFour.result.order, bizFour.result.card, bizFour.result.raw);
+  }
+
+  return buildTeamSummaryItems(bizFour.result.order, bizFour.result.card);
+});
+
+const bizFourDetailTitle = computed(() => {
+  if (!bizFour.result || !bizFour.result.ok) {
+    return CARD_TYPE_TITLES.unknown;
+  }
+  return CARD_TYPE_TITLES[bizFour.result.cardType] ?? CARD_TYPE_TITLES.unknown;
 });
 
 const buildMeta = computed(() => {
@@ -1087,11 +1501,12 @@ const submitBizFour = async () => {
         ? "卡密验证成功"
         : "卡密验证失败";
 
-    const { card, order } = normalizeEntities(response?.data ?? null);
-    const status = deriveUsageStatus(card, order);
+    const rawData = response?.data ?? null;
+    const { card, order } = normalizeEntities(rawData);
     const orderStatus = resolveOrderStatus(order);
+    const cardType = resolveCardTypeKey(card, order, rawData);
 
-    bizFour.result = { ok, message, card, order, status, orderStatus };
+    bizFour.result = { ok, message, card, order, orderStatus, cardType, raw: rawData };
 
     if (ok) {
       toast.success(message);
