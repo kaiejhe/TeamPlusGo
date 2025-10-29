@@ -231,6 +231,10 @@
           </div>
         </CardContent>
       </Card>
+
+      <footer class="text-center text-[11px] text-muted-foreground">
+        构建版本：{{ buildMeta.commit }}<span v-if="buildMeta.formattedTime"> · {{ buildMeta.formattedTime }}</span>
+      </footer>
     </div>
   </main>
 </template>
@@ -364,6 +368,19 @@ const bizFour = reactive({
 
 const bizFourNormalized = computed(() => normalizeCode(bizFour.code));
 const bizFourValid = computed(() => isValidCode(bizFourNormalized.value));
+
+const buildMeta = computed(() => {
+  const commit = __APP_COMMIT_HASH__ || "unknown";
+  const rawTime = __APP_BUILD_TIME__ || "";
+  let formattedTime = "";
+
+  if (rawTime) {
+    const parsed = new Date(rawTime);
+    formattedTime = Number.isNaN(parsed.getTime()) ? "" : parsed.toLocaleString();
+  }
+
+  return { commit, formattedTime };
+});
 
 const submitBizFour = () => {
   if (!bizFourValid.value || bizFour.loading) {
