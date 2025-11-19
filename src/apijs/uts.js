@@ -1,4 +1,4 @@
-const API_BASE = "https://plusadmin.pages.dev/api/functions";
+const API_BASE = "https://admin.aishop.baby/api/functions";
 
 export async function Card(body) {
   const payload = typeof body === "string" ? body : JSON.stringify(body);
