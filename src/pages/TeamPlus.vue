@@ -224,6 +224,11 @@ const handleSubmit = () => {
         throw new Error(detailMessage);
       }
       const apiResponse = data?.response ?? {};
+      const statusFlag = data?.status ?? (data?.ok ? "success" : "failed");
+      if (!apiResponse?.checkout_session_id || statusFlag !== "success") {
+        const detailMessage = data?.detail || data?.msg || "获取支付链接失败";
+        throw new Error(detailMessage);
+      }
       checkoutSessionId.value = apiResponse?.checkout_session_id ?? "";
       checkoutUrl.value = checkoutSessionId.value
         ? `https://checkout.stripe.com/c/pay/${checkoutSessionId.value}${STRIPE_URL_SUFFIX}`
