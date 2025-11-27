@@ -182,7 +182,7 @@ const handleSubmit = () => {
 
   isSubmitting.value = true;
   submitResult.value = null;
-  fetch("http://pyapi.my91.my/PaymentCheckoutPlus", {
+  fetch("https://pyapi.my91.my/PaymentCheckoutPlus", {
     method: "POST",
     headers: {
       "content-type": "application/json",
