@@ -97,9 +97,35 @@
           <p class="text-center text-xs text-muted-foreground">
             如需联调接口，可在提交处理函数内串接真实 API。
           </p>
-          <p v-if="submitResult" class="rounded-[var(--radius-xl)] border border-border bg-muted/30 px-4 py-3 text-xs text-muted-foreground">
-            {{ submitResult }}
-          </p>
+          <div
+            v-if="submitStatus"
+            class="rounded-[var(--radius-xl)] border px-4 py-3 text-xs sm:text-sm"
+            :class="
+              submitStatus.type === 'error'
+                ? 'border-destructive/40 bg-destructive/10 text-destructive'
+                : 'border-emerald-200 bg-emerald-50 text-emerald-700'
+            "
+          >
+            {{ submitStatus.message }}
+          </div>
+          <div
+            v-if="checkoutSessionId"
+            class="space-y-2 rounded-[var(--radius-xl)] border border-border bg-muted/30 px-4 py-4 text-xs text-muted-foreground"
+          >
+            <div class="flex items-center justify-between gap-3">
+              <span class="text-muted-foreground">Checkout Session ID</span>
+              <span class="font-mono text-sm text-foreground">{{ checkoutSessionId }}</span>
+            </div>
+            <div class="space-y-1">
+              <span class="text-muted-foreground">Stripe URL</span>
+              <div class="flex items-center gap-2 rounded-[var(--radius-xl)] border border-dashed border-border/70 bg-background px-3 py-2 text-foreground">
+                <span class="flex-1 truncate text-xs sm:text-sm">{{ checkoutUrl }}</span>
+                <Button variant="outline" size="icon" class="h-8 w-8" @click="copyCheckoutUrl">
+                  <Copy class="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
     </div>
@@ -110,7 +136,7 @@
 import { onMounted, ref } from "vue";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { RefreshCw } from "lucide-vue-next";
+import { Copy, RefreshCw } from "lucide-vue-next";
 
 const copy = {
   codePlaceholder: "请输入兑换码",
@@ -122,7 +148,9 @@ const selectedType = ref<"plus-first" | "plus-renew" | "grok">("plus-first");
 const jsonPayload = ref("");
 const redeemCode = ref("");
 const isSubmitting = ref(false);
-const submitResult = ref<string | null>(null);
+const submitStatus = ref<{ type: "success" | "error"; message: string } | null>(null);
+const checkoutSessionId = ref("");
+const checkoutUrl = ref("");
 
 const typeOptions = [
   { value: "plus-first", label: "首充 Plus" },
@@ -181,7 +209,7 @@ const handleSubmit = () => {
   }
 
   isSubmitting.value = true;
-  submitResult.value = null;
+  submitStatus.value = null;
   fetch("https://pyapi.my91.my/PaymentCheckoutPlus", {
     method: "POST",
     headers: {
@@ -194,13 +222,36 @@ const handleSubmit = () => {
       if (!response.ok || data?.ok === false) {
         throw new Error(data?.msg || "请求失败，请稍后再试");
       }
-      submitResult.value = data?.msg || "提交成功，等待处理";
+      const apiResponse = data?.response ?? {};
+      checkoutSessionId.value = apiResponse?.checkout_session_id ?? "";
+      checkoutUrl.value = checkoutSessionId.value
+        ? `https://checkout.stripe.com/c/pay/${checkoutSessionId.value}${STRIPE_URL_SUFFIX}`
+        : "";
+      submitStatus.value = {
+        type: "success",
+        message: data?.msg || "提交成功，等待处理",
+      };
     })
     .catch((error) => {
-      submitResult.value = error instanceof Error ? error.message : "请求异常，请稍后再试";
+      const message = error instanceof Error ? error.message : "请求异常，请稍后再试";
+      submitStatus.value = { type: "error", message };
+      alert(message);
     })
     .finally(() => {
       isSubmitting.value = false;
     });
 };
+
+const copyCheckoutUrl = async () => {
+  if (!checkoutUrl.value) return;
+  try {
+    await navigator.clipboard.writeText(checkoutUrl.value);
+    submitStatus.value = { type: "success", message: "已复制链接，可在新标签页打开" };
+  } catch (error) {
+    submitStatus.value = { type: "error", message: "复制失败，请手动复制链接" };
+  }
+};
+
+const STRIPE_URL_SUFFIX =
+  "#fidnandhYHdWcXxpYCc%2FJ2FgY2RwaXEnKSdpamZkaWAnPyd%2FbScpJ3ZwZ3Zmd2x1cWxqa1BrbHRwYGtgdnZAa2RnaWBhJz9jZGl2YCknZHVsTmB8Jz8ndW5aaWxzYFowNE1Kd1ZyRjNtNGt9QmpMNmlRRGJXb1xTd38xYVA2Y1NKZGd8RmZOVzZ1Z0BPYnBGU0RpdEZ9YX1GUHNqV200XVJyV2RmU2xqc1A2bklOc3Vub20yTHRuUjU1bF1Udm9qNmsnKSdjd2poVmB3c2B3Jz9xd3BgKSdnZGZuYndqcGthRmppancnPycmY2NjY2NjJyknaWR8anBxUXx1YCc%2FJ3Zsa2JpYFpscWBoJyknYGtkZ2lgVWlkZmBtamlhYHd2Jz9xd3BgeCUl";
 </script>
