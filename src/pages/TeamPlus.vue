@@ -230,7 +230,8 @@ const handleSubmit = () => {
     .then(async (response) => {
       const data = await response.json().catch(() => ({}));
       if (!response.ok || data?.ok === false) {
-        throw new Error(data?.msg || "请求失败，请稍后再试");
+        const detailMessage = data?.detail || data?.msg || "请求失败，请稍后再试";
+        throw new Error(detailMessage);
       }
       const apiResponse = data?.response ?? {};
       checkoutSessionId.value = apiResponse?.checkout_session_id ?? "";
