@@ -176,9 +176,16 @@ const handleSubmit = () => {
     alert("首充 Plus 类型需填写兑换码");
     return;
   }
-
   if (!jsonPayload.value.trim()) {
     alert("请输入 JSON 或 Token 文本");
+    return;
+  }
+
+  if (selectedType.value === "grok") {
+    submitStatus.value = {
+      type: "error",
+      message: "Grok 会员接口尚未接入。",
+    };
     return;
   }
 
@@ -200,8 +207,6 @@ const handleSubmit = () => {
   payload.token = tokenValue;
   payload.zhanghao = agentAccount.value.trim();
   payload.mima = agentPassword.value.trim();
-  payload.codekey =
-    selectedType.value === "plus-first" ? redeemCode.value.trim() : payload.codekey ?? "";
 
   if (!payload.token) {
     alert("无法识别 accessToken，请检查输入内容");
@@ -210,7 +215,12 @@ const handleSubmit = () => {
 
   isSubmitting.value = true;
   submitStatus.value = null;
-  fetch("https://pyapi.my91.my/PaymentCheckoutPlus", {
+  const targetUrl =
+    selectedType.value === "plus-first"
+      ? "https://pyapi.my91.my/PaymentCheckout"
+      : "https://pyapi.my91.my/PaymentCheckoutPlus";
+
+  fetch(targetUrl, {
     method: "POST",
     headers: {
       "content-type": "application/json",
