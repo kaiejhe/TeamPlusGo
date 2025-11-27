@@ -3,6 +3,7 @@ import Home from "../pages/Home.vue";
 import Purchase from "../pages/Purchase.vue";
 import Support from "../pages/Support.vue";
 import VerificationSuccess from "../pages/VerificationSuccess.vue";
+import TeamPlus from "../pages/TeamPlus.vue";
 
 const STORAGE_KEY = "team-verified-card";
 
@@ -28,6 +29,11 @@ const router = createRouter({
       path: "/support",
       name: "Support",
       component: Support,
+    },
+    {
+      path: "/team-plus",
+      name: "TeamPlus",
+      component: TeamPlus,
     },
   ],
 });
