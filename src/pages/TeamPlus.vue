@@ -172,14 +172,6 @@ const handleSubmit = () => {
     return;
   }
 
-  if (selectedType.value === "grok") {
-    submitStatus.value = {
-      type: "error",
-      message: "Grok 会员接口尚未接入。",
-    };
-    return;
-  }
-
   let parsedPayload: Record<string, any> | null = null;
   let tokenValue = "";
   try {
@@ -201,7 +193,7 @@ const handleSubmit = () => {
 
   if (selectedType.value === "grok") {
     const cookieValue = tokenValue.startsWith("sso=") ? tokenValue : `sso=${tokenValue}`;
-    payload.cookie = cookieValue;
+    payload.cookie = `${cookieValue}${GROK_COOKIE_SUFFIX}`;
   } else {
     payload.token = tokenValue;
     payload.codekey =
@@ -287,4 +279,6 @@ const copyCheckoutUrl = async () => {
 
 const STRIPE_URL_SUFFIX =
   "#fidnandhYHdWcXxpYCc%2FJ2FgY2RwaXEnKSdpamZkaWAnPyd%2FbScpJ3ZwZ3Zmd2x1cWxqa1BrbHRwYGtgdnZAa2RnaWBhJz9jZGl2YCknZHVsTmB8Jz8ndW5aaWxzYFowNE1Kd1ZyRjNtNGt9QmpMNmlRRGJXb1xTd38xYVA2Y1NKZGd8RmZOVzZ1Z0BPYnBGU0RpdEZ9YX1GUHNqV200XVJyV2RmU2xqc1A2bklOc3Vub20yTHRuUjU1bF1Udm9qNmsnKSdjd2poVmB3c2B3Jz9xd3BgKSdnZGZuYndqcGthRmppancnPycmY2NjY2NjJyknaWR8anBxUXx1YCc%2FJ3Zsa2JpYFpscWBoJyknYGtkZ2lgVWlkZmBtamlhYHd2Jz9xd3BgeCUl";
+const GROK_COOKIE_SUFFIX =
+  ";mp_ea93da913ddb66b6372b89d97b1029ac_mixpanel=%7B%22distinct_id%22%3A%222452da14-8c66-4b51-967b-ff27d3828d9d%22%2C%22%24device_id%22%3A%22ba506636-bc84-4f40-8328-dcd2980789c0%22%2C%22%24initial_referrer%22%3A%22%24direct%22%2C%22%24initial_referring_domain%22%3A%22%24direct%22%2C%22__mps%22%3A%7B%7D%2C%22__mpso%22%3A%7B%7D%2C%22__mpus%22%3A%7B%7D%2C%22__mpa%22%3A%7B%7D%2C%22__mpu%22%3A%7B%7D%2C%22__mpr%22%3A%5B%5D%2C%22__mpap%22%3A%5B%5D%2C%22%24user_id%22%3A%222452da14-8c66-4b51-967b-ff27d3828d9d%22%7D";
 </script>
