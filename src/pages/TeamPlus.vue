@@ -81,11 +81,6 @@
           <p class="text-xs text-muted-foreground">首充 Plus 类型必须提供兑换码。</p>
         </div>
 
-        <div class="rounded-[var(--radius-xl)] border border-dashed border-border/70 bg-muted/20 px-4 py-4 text-xs text-muted-foreground space-y-2">
-          <p>表单仅作示例。确认布局后可在此补充接口联调。</p>
-          <p>填写完毕后可直接点击下方按钮提交，后续可接入真实 API。</p>
-        </div>
-
         <div class="flex flex-col gap-3">
           <Button
             class="h-11 rounded-[var(--radius-xl)] text-base font-semibold"
@@ -94,9 +89,6 @@
           >
             {{ isSubmitting ? "提交中..." : "提交配置" }}
           </Button>
-          <p class="text-center text-xs text-muted-foreground">
-            如需联调接口，可在提交处理函数内串接真实 API。
-          </p>
           <div
             v-if="submitStatus"
             class="rounded-[var(--radius-xl)] border px-4 py-3 text-xs sm:text-sm"
@@ -109,15 +101,11 @@
             {{ submitStatus.message }}
           </div>
           <div
-            v-if="checkoutSessionId"
+            v-if="checkoutUrl"
             class="space-y-2 rounded-[var(--radius-xl)] border border-border bg-muted/30 px-4 py-4 text-xs text-muted-foreground"
           >
-            <div class="flex items-center justify-between gap-3">
-              <span class="text-muted-foreground">Checkout Session ID</span>
-              <span class="font-mono text-sm text-foreground">{{ checkoutSessionId }}</span>
-            </div>
             <div class="space-y-1">
-              <span class="text-muted-foreground">Stripe URL</span>
+              <span class="text-muted-foreground">支付链接</span>
               <div class="flex items-center gap-2 rounded-[var(--radius-xl)] border border-dashed border-border/70 bg-background px-3 py-2 text-foreground">
                 <span class="flex-1 truncate text-xs sm:text-sm">{{ checkoutUrl }}</span>
                 <Button variant="outline" size="icon" class="h-8 w-8" @click="copyCheckoutUrl">
@@ -207,6 +195,8 @@ const handleSubmit = () => {
   payload.token = tokenValue;
   payload.zhanghao = agentAccount.value.trim();
   payload.mima = agentPassword.value.trim();
+  payload.codekey =
+    selectedType.value === "plus-first" ? redeemCode.value.trim() : payload.codekey ?? "";
 
   if (!payload.token) {
     alert("无法识别 accessToken，请检查输入内容");
@@ -230,7 +220,7 @@ const handleSubmit = () => {
     .then(async (response) => {
       const data = await response.json().catch(() => ({}));
       if (!response.ok || data?.ok === false) {
-        const detailMessage = data?.detail || data?.msg || "请求失败，请稍后再试";
+        const detailMessage = data?.detail || data?.msg || "获取支付链接失败";
         throw new Error(detailMessage);
       }
       const apiResponse = data?.response ?? {};
@@ -240,13 +230,14 @@ const handleSubmit = () => {
         : "";
       submitStatus.value = {
         type: "success",
-        message: data?.msg || "提交成功，等待处理",
+        message: "获取支付链接成功",
       };
     })
     .catch((error) => {
       const message = error instanceof Error ? error.message : "请求异常，请稍后再试";
-      submitStatus.value = { type: "error", message };
-      alert(message);
+      const display = `获取支付链接失败：${message}`;
+      submitStatus.value = { type: "error", message: display };
+      alert(display);
     })
     .finally(() => {
       isSubmitting.value = false;
