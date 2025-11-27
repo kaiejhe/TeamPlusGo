@@ -113,6 +113,9 @@
                 </Button>
               </div>
             </div>
+            <div v-if="proxyIp" class="text-[11px] text-muted-foreground">
+              节点 IP：{{ proxyIp }}
+            </div>
           </div>
         </div>
       </section>
@@ -137,8 +140,8 @@ const jsonPayload = ref("");
 const redeemCode = ref("");
 const isSubmitting = ref(false);
 const submitStatus = ref<{ type: "success" | "error"; message: string } | null>(null);
-const checkoutSessionId = ref("");
 const checkoutUrl = ref("");
+const proxyIp = ref("");
 
 const typeOptions = [
   { value: "plus-first", label: "首充 Plus" },
@@ -186,29 +189,39 @@ const handleSubmit = () => {
       parsedPayload.token ??
       parsedPayload.Token ??
       parsedPayload.user?.accessToken ??
+      parsedPayload.cookie ??
       "";
   } catch {
     tokenValue = jsonPayload.value.trim();
   }
 
-  const payload: Record<string, any> = parsedPayload ? { ...parsedPayload } : {};
-  payload.token = tokenValue;
+  const payload: Record<string, any> = parsedPayload && selectedType.value !== "grok" ? { ...parsedPayload } : {};
   payload.zhanghao = agentAccount.value.trim();
   payload.mima = agentPassword.value.trim();
-  payload.codekey =
-    selectedType.value === "plus-first" ? redeemCode.value.trim() : payload.codekey ?? "";
 
-  if (!payload.token) {
-    alert("无法识别 accessToken，请检查输入内容");
-    return;
+  if (selectedType.value === "grok") {
+    const cookieValue = tokenValue.startsWith("sso=") ? tokenValue : `sso=${tokenValue}`;
+    payload.cookie = cookieValue;
+  } else {
+    payload.token = tokenValue;
+    payload.codekey =
+      selectedType.value === "plus-first" ? redeemCode.value.trim() : payload.codekey ?? "";
+    if (!payload.token) {
+      alert("无法识别 accessToken，请检查输入内容");
+      return;
+    }
   }
 
   isSubmitting.value = true;
   submitStatus.value = null;
+  checkoutUrl.value = "";
+  proxyIp.value = "";
   const targetUrl =
     selectedType.value === "plus-first"
       ? "https://pyapi.my91.my/PaymentCheckout"
-      : "https://pyapi.my91.my/PaymentCheckoutPlus";
+      : selectedType.value === "plus-renew"
+        ? "https://pyapi.my91.my/PaymentCheckoutPlus"
+        : "https://pyapi.my91.my/GrokSubscribe2";
 
   fetch(targetUrl, {
     method: "POST",
@@ -225,14 +238,27 @@ const handleSubmit = () => {
       }
       const apiResponse = data?.response ?? {};
       const statusFlag = data?.status ?? (data?.ok ? "success" : "failed");
-      if (!apiResponse?.checkout_session_id || statusFlag !== "success") {
+      if (statusFlag !== "success") {
         const detailMessage = data?.detail || data?.msg || "获取支付链接失败";
         throw new Error(detailMessage);
       }
-      checkoutSessionId.value = apiResponse?.checkout_session_id ?? "";
-      checkoutUrl.value = checkoutSessionId.value
-        ? `https://checkout.stripe.com/c/pay/${checkoutSessionId.value}${STRIPE_URL_SUFFIX}`
-        : "";
+
+      if (selectedType.value === "grok") {
+        const url = apiResponse?.url ?? "";
+        if (!url) {
+          throw new Error("返回结果缺少支付链接");
+        }
+        checkoutUrl.value = url;
+        proxyIp.value = data?.proxy_ip ?? apiResponse?.proxy_ip ?? "";
+      } else {
+        const sessionId = apiResponse?.checkout_session_id ?? "";
+        if (!sessionId) {
+          throw new Error("返回结果缺少 Session ID");
+        }
+        checkoutUrl.value = `https://checkout.stripe.com/c/pay/${sessionId}${STRIPE_URL_SUFFIX}`;
+        proxyIp.value = "";
+      }
+
       submitStatus.value = {
         type: "success",
         message: "获取支付链接成功",
