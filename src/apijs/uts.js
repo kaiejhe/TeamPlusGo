@@ -1,4 +1,7 @@
-const API_BASE = "https://admin.aishop.baby/api/functions";
+const API_BASE =
+  typeof window !== "undefined"
+    ? `${window.location.origin}/api/functions`
+    : "https://plusadmin.pages.dev/api/functions";
 
 export async function Card(body) {
   const payload = typeof body === "string" ? body : JSON.stringify(body);
@@ -25,4 +28,3 @@ export async function Card(body) {
 
   return data;
 }
-
