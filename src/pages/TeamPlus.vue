@@ -381,11 +381,11 @@ const handleSubmit = () => {
 
   const targetUrl =
     selectedType.value === "plus-first"
-      ? "https://pyapi.my91.my/PaymentCheckout"
+      ? "https://pyapi.my91.my/MianfeiPlusShouChong"
       : selectedType.value === "plus-renew"
-        ? "https://pyapi.my91.my/PaymentCheckoutPlus"
+        ? "https://pyapi.my91.my/FeilvbinPlus"
         : selectedType.value === "grok-month"
-          ? "https://pyapi.my91.my/GrokSubscribe2"
+          ? "https://pyapi.my91.my/SuperGrok"
           : "UNSUPPORTED";
 
   if (targetUrl === "UNSUPPORTED") {

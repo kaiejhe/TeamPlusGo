@@ -4,6 +4,8 @@ import Purchase from "../pages/Purchase.vue";
 import Support from "../pages/Support.vue";
 import VerificationSuccess from "../pages/VerificationSuccess.vue";
 import TeamPlus from "../pages/TeamPlus.vue";
+import Plusview from "../pages/Plusview.vue";
+import PlusSubscription from "../pages/PlusSubscription.vue";
 
 const STORAGE_KEY = "team-verified-card";
 
@@ -34,6 +36,16 @@ const router = createRouter({
       path: "/team-plus",
       name: "TeamPlus",
       component: TeamPlus,
+    },
+    {
+      path: "/plusview",
+      name: "Plusview",
+      component: Plusview,
+    },
+    {
+      path: "/plus-subscription",
+      name: "PlusSubscription",
+      component: PlusSubscription,
     },
   ],
 });
