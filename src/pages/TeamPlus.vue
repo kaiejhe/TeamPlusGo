@@ -385,7 +385,7 @@ const handleSubmit = () => {
       : selectedType.value === "plus-renew"
         ? "https://pyapi.my91.my/FeilvbinPlus"
         : selectedType.value === "grok-month"
-          ? "https://pyapi.my91.my/SuperGrok"
+          ? "https://pyapi.my91.my/SuperGrokPlus"
           : "UNSUPPORTED";
 
   if (targetUrl === "UNSUPPORTED") {
