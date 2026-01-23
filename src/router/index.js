@@ -6,6 +6,7 @@ import VerificationSuccess from "../pages/VerificationSuccess.vue";
 import TeamPlus from "../pages/TeamPlus.vue";
 import Plusview from "../pages/Plusview.vue";
 import PlusSubscription from "../pages/PlusSubscription.vue";
+import OpenGrokApp from "../pages/openGrokApp.vue";
 
 const STORAGE_KEY = "team-verified-card";
 
@@ -46,6 +47,11 @@ const router = createRouter({
       path: "/plus-subscription",
       name: "PlusSubscription",
       component: PlusSubscription,
+    },
+    {
+      path: "/open-grok-app",
+      name: "OpenGrokApp",
+      component: OpenGrokApp,
     },
   ],
 });
