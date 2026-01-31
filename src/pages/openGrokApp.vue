@@ -18,13 +18,23 @@
             autocomplete="off"
           />
         </div>
-        <Button
-          class="mt-6 w-full h-11 rounded-[var(--radius-xl)]"
-          :disabled="!sessionCookie.trim()"
-          @click="openApp"
-        >
-          打开 Grok
-        </Button>
+        <div class="mt-6 grid gap-3 sm:grid-cols-2">
+          <Button
+            class="h-11 rounded-[var(--radius-xl)]"
+            :disabled="!sessionCookie.trim()"
+            @click="openApp('android')"
+          >
+            打开 Android
+          </Button>
+          <Button
+            variant="outline"
+            class="h-11 rounded-[var(--radius-xl)]"
+            :disabled="!sessionCookie.trim()"
+            @click="openApp('ios')"
+          >
+            打开 iOS
+          </Button>
+        </div>
       </div>
     </div>
   </main>
@@ -37,7 +47,7 @@ import { ref } from "vue";
 
 const sessionCookie = ref("");
 
-const openApp = () => {
+const openApp = (_platform: "android" | "ios") => {
   const value = sessionCookie.value.trim();
   if (!value) return;
   const deeplink = `com.grokapp://login?sessionCookie=${encodeURIComponent(value)}`;
