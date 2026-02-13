@@ -358,8 +358,10 @@ const handleSubmit = () => {
 
   const payload: Record<string, any> =
     parsedPayload && selectedType.value !== "grok-month" ? { ...parsedPayload } : {};
-  payload.zhanghao = agentAccount.value.trim();
-  payload.mima = agentPassword.value.trim();
+  if (selectedType.value !== "grok-month") {
+    payload.zhanghao = agentAccount.value.trim();
+    payload.mima = agentPassword.value.trim();
+  }
 
   if (selectedType.value === "grok-month") {
     const cookieValue = tokenValue.startsWith("sso=") ? tokenValue : `sso=${tokenValue}`;
@@ -402,14 +404,18 @@ const handleSubmit = () => {
     return;
   }
 
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000);
   fetch(targetUrl, {
     method: "POST",
     headers: {
       "content-type": "application/json",
     },
     body: JSON.stringify(payload),
+    signal: controller.signal,
   })
     .then(async (response) => {
+      clearTimeout(timeoutId);
       const data = await response.json().catch(() => ({}));
       if (selectedType.value === "grok-month") {
         if (!response.ok || data?.code !== 200) {
@@ -442,10 +448,16 @@ const handleSubmit = () => {
       submitStatus.value = { type: "success", message: "获取支付链接成功" };
     })
     .catch((error) => {
-      const message = error instanceof Error ? error.message : "请求异常，请稍后再试";
+      const isTimeout = error instanceof DOMException && error.name === "AbortError";
+      const message = isTimeout
+        ? "请求超时（10秒内无响应）"
+        : error instanceof Error
+          ? error.message
+          : "请求异常，请稍后再试";
       submitStatus.value = { type: "error", message: `获取支付链接失败：${message}` };
     })
     .finally(() => {
+      clearTimeout(timeoutId);
       isSubmitting.value = false;
     });
 };
