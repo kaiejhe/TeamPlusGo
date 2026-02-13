@@ -363,7 +363,13 @@ const handleSubmit = () => {
 
   if (selectedType.value === "grok-month") {
     const cookieValue = tokenValue.startsWith("sso=") ? tokenValue : `sso=${tokenValue}`;
-    payload.cookie = `${cookieValue}${GROK_COOKIE_SUFFIX}`;
+    payload.cookie = cookieValue;
+    payload.proxy = {
+      username: agentAccount.value.trim(),
+      password: agentPassword.value.trim(),
+      port: "7778",
+      url: "change5.owlproxy.com",
+    };
   } else {
     payload.token = tokenValue;
     payload.codekey =
@@ -384,8 +390,8 @@ const handleSubmit = () => {
       ? "https://pyapi.my91.my/MianfeiPlusShouChong"
       : selectedType.value === "plus-renew"
         ? "https://pyapi.my91.my/FeilvbinPlus"
-        : selectedType.value === "grok-month"
-          ? "https://pyapi.my91.my/SuperGrokPlus"
+      : selectedType.value === "grok-month"
+          ? "https://pyapi.my91.my/GrokPlay"
           : "UNSUPPORTED";
 
   if (targetUrl === "UNSUPPORTED") {
@@ -405,24 +411,27 @@ const handleSubmit = () => {
   })
     .then(async (response) => {
       const data = await response.json().catch(() => ({}));
-      if (!response.ok || data?.ok === false) {
-        const detailMessage = data?.detail || data?.msg || "获取支付链接失败";
-        throw new Error(detailMessage);
-      }
-
-      const apiResponse = data?.response ?? {};
-      const statusFlag = data?.status ?? (data?.ok ? "success" : "failed");
-      if (statusFlag !== "success") {
-        const detailMessage = data?.detail || data?.msg || "获取支付链接失败";
-        throw new Error(detailMessage);
-      }
-
       if (selectedType.value === "grok-month") {
-        const url = apiResponse?.url ?? "";
+        if (!response.ok || data?.code !== 200) {
+          const detailMessage = [data?.message, data?.data?.message].filter(Boolean).join(" - ");
+          throw new Error(detailMessage || "获取支付链接失败");
+        }
+        const url = typeof data?.message === "string" ? data.message : "";
         if (!url) throw new Error("返回结果缺少支付链接");
         checkoutUrl.value = url;
-        proxyIp.value = data?.proxy_ip ?? apiResponse?.proxy_ip ?? "";
+        proxyIp.value = "";
       } else {
+        if (!response.ok || data?.ok === false) {
+          const detailMessage = data?.detail || data?.msg || "获取支付链接失败";
+          throw new Error(detailMessage);
+        }
+
+        const apiResponse = data?.response ?? {};
+        const statusFlag = data?.status ?? (data?.ok ? "success" : "failed");
+        if (statusFlag !== "success") {
+          const detailMessage = data?.detail || data?.msg || "获取支付链接失败";
+          throw new Error(detailMessage);
+        }
         const sessionId =
           apiResponse?.checkout_session_id || apiResponse?.checkout_session?.id || "";
         if (!sessionId) throw new Error("返回结果缺少 Session ID");
@@ -453,6 +462,4 @@ const copyCheckoutUrl = async () => {
 
 const STRIPE_URL_SUFFIX =
   "#fidnandhYHdWcXxpYCc%2FJ2FgY2RwaXEnKSdpamZkaWAnPyd%2FbScpJ3ZwZ3Zmd2x1cWxqa1BrbHRwYGtgdnZAa2RnaWBhJz9jZGl2YCknZHVsTmB8Jz8ndW5aaWxzYFowNE1Kd1ZyRjNtNGt9QmpMNmlRRGJXb1xTd38xYVA2Y1NKZGd8RmZOVzZ1Z0BPYnBGU0RpdEZ9YX1GUHNqV200XVJyV2RmU2xqc1A2bklOc3Vub20yTHRuUjU1bF1Udm9qNmsnKSdjd2poVmB3c2B3Jz9xd3BgKSdnZGZuYndqcGthRmppancnPycmY2NjY2NjJyknaWR8anBxUXx1YCc%2FJ3Zsa2JpYFpscWBoJyknYGtkZ2lgVWlkZmBtamlhYHd2Jz9xd3BgeCUl";
-const GROK_COOKIE_SUFFIX =
-  ";mp_ea93da913ddb66b6372b89d97b1029ac_mixpanel=%7B%22distinct_id%22%3A%222452da14-8c66-4b51-967b-ff27d3828d9d%22%2C%22%24device_id%22%3A%22ba506636-bc84-4f40-8328-dcd2980789c0%22%2C%22%24initial_referrer%22%3A%22%24direct%22%2C%22%24initial_referring_domain%22%3A%22%24direct%22%2C%22__mps%22%3A%7B%7D%2C%22__mpso%22%3A%7B%7D%2C%22__mpus%22%3A%7B%7D%2C%22__mpa%22%3A%7B%7D%2C%22__mpu%22%3A%7B%7D%2C%22__mpr%22%3A%5B%5D%2C%22__mpap%22%3A%5B%5D%2C%22%24user_id%22%3A%222452da14-8c66-4b51-967b-ff27d3828d9d%22%7D";
 </script>
