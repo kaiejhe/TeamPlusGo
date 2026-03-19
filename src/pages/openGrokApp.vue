@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <main class="min-h-screen flex items-center justify-center bg-background px-4">
     <div class="w-full max-w-md">
       <div class="rounded-[var(--radius-xl)] border border-border bg-card shadow-lg px-6 py-8 text-center">
@@ -57,8 +57,8 @@
 </template>
 
 <script setup lang="ts">
-import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
 import { ref } from "vue";
 
 const sessionToken = ref("");
@@ -100,5 +100,3 @@ const openIos = async () => {
   }
 };
 </script>
-
-
