@@ -8,33 +8,40 @@ const cardCode = ref("");
 
 <template>
   <main
-    class="min-h-screen bg-[linear-gradient(180deg,#d9e6f5_0%,#d4e0f0_100%)] px-4 py-8 sm:px-6"
+    class="min-h-screen bg-[linear-gradient(180deg,#dce8f6_0%,#d5e2f2_100%)] px-4 py-6 sm:px-6 sm:py-10"
   >
-    <div class="mx-auto flex min-h-[calc(100vh-4rem)] max-w-5xl items-center justify-center">
+    <div
+      class="mx-auto flex min-h-[calc(100vh-3rem)] max-w-5xl items-center justify-center sm:min-h-[calc(100vh-5rem)]"
+    >
       <section
-        class="w-full max-w-[580px] rounded-[22px] bg-white px-8 py-12 shadow-[0_20px_50px_rgba(90,118,152,0.2)] sm:px-14 sm:py-16"
+        class="w-full max-w-[520px] rounded-[24px] border border-white/70 bg-white px-7 py-9 shadow-[0_18px_44px_rgba(90,118,152,0.16)] sm:px-10 sm:py-11"
       >
-        <div class="space-y-10">
+        <div class="space-y-7">
           <header class="text-center">
-            <h1 class="text-4xl font-black tracking-tight text-slate-950 sm:text-5xl">
+            <h1
+              class="text-[clamp(2.1rem,4vw,3.1rem)] font-black leading-none tracking-[-0.045em] text-slate-950"
+            >
               卡密自助充值
             </h1>
           </header>
 
-          <div class="space-y-5">
-            <label for="card-code" class="block text-2xl font-medium text-slate-800">
+          <div class="space-y-3.5">
+            <label
+              for="card-code"
+              class="block text-[1.2rem] font-medium leading-none text-slate-800 sm:text-[1.55rem]"
+            >
               请输入充值卡密
             </label>
             <Input
               id="card-code"
               v-model="cardCode"
-              class="h-[76px] rounded-[14px] border-2 border-slate-900 bg-white px-6 text-xl shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
+              class="h-[64px] rounded-[14px] border-2 border-slate-900 bg-white px-5 text-[1.05rem] shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 sm:h-[68px] sm:px-6 sm:text-[1.15rem]"
               autocomplete="off"
             />
           </div>
 
           <Button
-            class="h-[74px] w-full rounded-[14px] bg-emerald-400 text-2xl font-bold text-white shadow-none hover:bg-emerald-500"
+            class="h-[62px] w-full rounded-[14px] bg-emerald-400 text-[1.22rem] font-bold tracking-[0.01em] text-white shadow-none hover:bg-emerald-500 sm:h-[66px] sm:text-[1.4rem]"
           >
             验证卡密
           </Button>
