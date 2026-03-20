@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from "vue-router";
 import OpenGrokApp from "../pages/openGrokApp.vue";
 import CardRecharge from "../pages/CardRecharge.vue";
+import CardRechargeSuccess from "../pages/CardRechargeSuccess.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -14,6 +15,11 @@ const router = createRouter({
       path: "/card-recharge",
       name: "CardRecharge",
       component: CardRecharge,
+    },
+    {
+      path: "/card-recharge/success",
+      name: "CardRechargeSuccess",
+      component: CardRechargeSuccess,
     },
   ],
 });
