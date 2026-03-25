@@ -13,20 +13,17 @@ const submitting = ref(false);
 
 const mockValidateCard = async (value: string) => {
   await new Promise((resolve) => setTimeout(resolve, 900));
-  const normalized = value.trim().toUpperCase();
-  const isSuccess =
-    normalized.includes("OK") ||
-    normalized.includes("SUCCESS") ||
-    normalized.endsWith("8888");
 
-  if (isSuccess) {
+  if (value.trim().toUpperCase() === "OK") {
     return { ok: true, message: "卡密验证成功" };
   }
+
   return { ok: false, message: "卡密无效或已被使用" };
 };
 
 const handleValidate = async () => {
   const value = cardCode.value.trim();
+
   if (!value || submitting.value) {
     if (!value) {
       toast.error("请输入充值卡密");
@@ -35,8 +32,10 @@ const handleValidate = async () => {
   }
 
   submitting.value = true;
+
   try {
     const result = await mockValidateCard(value);
+
     if (!result.ok) {
       toast.error(result.message);
       return;
@@ -91,17 +90,6 @@ const handleValidate = async () => {
               autocomplete="off"
               @keyup.enter="handleValidate"
             />
-
-            <div
-              class="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-500"
-            >
-              模拟验证规则：输入内容包含
-              <span class="font-semibold text-slate-700">OK</span>、
-              <span class="font-semibold text-slate-700">SUCCESS</span>
-              或以
-              <span class="font-semibold text-slate-700">8888</span>
-              结尾时视为验证成功。
-            </div>
           </div>
 
           <Button
