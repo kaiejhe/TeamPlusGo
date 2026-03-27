@@ -26,13 +26,34 @@ const openDemo = () => {
   toast("演示视频功能待接入");
 };
 
+const parseJsonPayload = (value: string) => {
+  try {
+    const parsed = JSON.parse(value);
+
+    if (parsed === null || Array.isArray(parsed) || typeof parsed !== "object") {
+      throw new Error("参数不对，请粘贴完整 JSON 参数");
+    }
+
+    return parsed as Record<string, unknown>;
+  } catch {
+    throw new Error("参数不对，请粘贴完整 JSON 参数");
+  }
+};
+
 const validateAccountInfo = () => {
-  if (!jsonPayload.value.trim()) {
+  const payload = jsonPayload.value.trim();
+
+  if (!payload) {
     toast.error("请先粘贴 JSON 参数");
     return;
   }
 
-  toast.success("账号信息验证功能待接入");
+  try {
+    parseJsonPayload(payload);
+    toast.success("JSON 参数格式正确");
+  } catch (error) {
+    toast.error(error instanceof Error ? error.message : "参数不对，请粘贴完整 JSON 参数");
+  }
 };
 </script>
 
@@ -99,13 +120,13 @@ const validateAccountInfo = () => {
                 请粘贴复制的 JSON 参数
               </label>
               <p class="text-sm leading-6 text-slate-500">
-                完整粘贴后，点击下方按钮验证账号信息。
+                仅支持合法 JSON 格式，完整粘贴后再点击下方按钮验证。
               </p>
             </div>
 
             <Textarea
               v-model="jsonPayload"
-              placeholder='例如：{"token":"xxxx","email":"demo@example.com"}'
+              placeholder='例如：{"user":{"email":"demo@example.com"},"account":{"planType":"plus"}}'
               class="mt-4 min-h-[260px] resize-none rounded-xl border-slate-200 bg-white px-4 py-3 font-mono text-sm leading-7 text-slate-800 shadow-none focus-visible:ring-0"
               spellcheck="false"
             />
