@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { useRouter } from "vue-router";
-import { ArrowLeft, ExternalLink, Link2, PlayCircle } from "lucide-vue-next";
+import { ArrowLeft, ChevronRight, ExternalLink, Link2, PlayCircle } from "lucide-vue-next";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -61,37 +61,35 @@ const validateAccountInfo = () => {
             </Button>
           </div>
 
-          <div class="grid gap-3 sm:grid-cols-2">
+          <div class="space-y-3">
             <button
               type="button"
-              class="group rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-sm transition-colors hover:border-slate-300 hover:bg-slate-50"
+              class="group flex w-full items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-left shadow-none transition-colors hover:border-slate-300 hover:bg-slate-50"
               @click="openOfficialLogin"
             >
-              <div class="flex items-center gap-3">
-                <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-700">
-                  <ExternalLink class="h-4 w-4" />
-                </div>
-                <div class="min-w-0">
-                  <p class="text-sm font-semibold text-slate-900">打开官网登录</p>
-                  <p class="mt-1 text-xs text-slate-500">先登录要充值的账号</p>
-                </div>
+              <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-700">
+                <ExternalLink class="h-4 w-4" />
               </div>
+              <div class="min-w-0 flex-1">
+                <p class="text-sm font-semibold text-slate-900">打开官网登录</p>
+                <p class="mt-0.5 text-xs text-slate-500">先登录要充值的账号</p>
+              </div>
+              <ChevronRight class="h-4 w-4 shrink-0 text-slate-400 transition-transform group-hover:translate-x-0.5" />
             </button>
 
             <button
               type="button"
-              class="group rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-sm transition-colors hover:border-slate-300 hover:bg-slate-50"
+              class="group flex w-full items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-left shadow-none transition-colors hover:border-slate-300 hover:bg-slate-50"
               @click="openParamsPage"
             >
-              <div class="flex items-center gap-3">
-                <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-700">
-                  <Link2 class="h-4 w-4" />
-                </div>
-                <div class="min-w-0">
-                  <p class="text-sm font-semibold text-slate-900">打开参数网址</p>
-                  <p class="mt-1 text-xs text-slate-500">复制完整的 JSON 参数</p>
-                </div>
+              <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-700">
+                <Link2 class="h-4 w-4" />
               </div>
+              <div class="min-w-0 flex-1">
+                <p class="text-sm font-semibold text-slate-900">打开参数网址</p>
+                <p class="mt-0.5 text-xs text-slate-500">复制完整的 JSON 参数</p>
+              </div>
+              <ChevronRight class="h-4 w-4 shrink-0 text-slate-400 transition-transform group-hover:translate-x-0.5" />
             </button>
           </div>
 

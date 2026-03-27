@@ -7,18 +7,38 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "@/components/ui/toast";
 
+const CARD_VALIDATE_URL = "https://homeapi.ztjs999999.workers.dev/cdk/getcard";
+
 const router = useRouter();
 const cardCode = ref("");
 const submitting = ref(false);
 
-const mockValidateCard = async (value: string) => {
-  await new Promise((resolve) => setTimeout(resolve, 900));
+type ValidateCardResponse = {
+  Code?: number;
+  Message?: string;
+  Data?: {
+    success?: boolean;
+  };
+};
 
-  if (value.trim().toUpperCase() === "OK") {
-    return { ok: true, message: "卡密验证成功" };
+const validateCard = async (value: string) => {
+  const response = await fetch(CARD_VALIDATE_URL, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      card: value,
+    }),
+  });
+
+  const data = (await response.json().catch(() => ({}))) as ValidateCardResponse;
+
+  if (!response.ok || data.Code !== 200 || data.Data?.success !== true) {
+    throw new Error(data.Message || "卡密验证失败");
   }
 
-  return { ok: false, message: "卡密无效或已被使用" };
+  return data;
 };
 
 const handleValidate = async () => {
@@ -34,22 +54,17 @@ const handleValidate = async () => {
   submitting.value = true;
 
   try {
-    const result = await mockValidateCard(value);
+    await validateCard(value);
 
-    if (!result.ok) {
-      toast.error(result.message);
-      return;
-    }
-
-    toast.success(result.message);
+    toast.success("卡密验证成功");
     router.push({
       name: "CardRechargeSuccess",
       query: {
         card: value,
       },
     });
-  } catch {
-    toast.error("验证失败，请稍后重试");
+  } catch (error) {
+    toast.error(error instanceof Error ? error.message : "验证失败，请稍后重试");
   } finally {
     submitting.value = false;
   }
