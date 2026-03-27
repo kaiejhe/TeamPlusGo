@@ -14,11 +14,9 @@ const cardCode = ref("");
 const submitting = ref(false);
 
 type ValidateCardResponse = {
-  Code?: number;
-  Message?: string;
-  Data?: {
-    Success?: boolean;
-  };
+  code?: number;
+  message?: string;
+  success?: boolean;
 };
 
 const validateCard = async (value: string) => {
@@ -34,8 +32,8 @@ const validateCard = async (value: string) => {
 
   const data = (await response.json().catch(() => ({}))) as ValidateCardResponse;
 
-  if (!response.ok || data.Code !== 200 || data.Data?.Success !== true) {
-    throw new Error(data.Message || "卡密验证失败");
+  if (!response.ok || data.code !== 200 || data.success !== true) {
+    throw new Error(data.message || "卡密验证失败");
   }
 
   return data;
@@ -114,10 +112,6 @@ const handleValidate = async () => {
           >
             <BadgeCheck class="h-4 w-4" />
             {{ submitting ? "验证中..." : "验证卡密" }}
-
-
-
-
           </Button>
         </CardContent>
       </Card>
